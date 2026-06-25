@@ -1,0 +1,87 @@
+import { Request, Response } from 'express';
+import { query } from '../../db';
+
+export const list = async (req: Request, res: Response) => {
+  try {
+    const result = await query(`
+      SELECT rb.*, c.name as client_name, c.company_name
+      FROM recurring_bills rb
+      JOIN clients c ON rb.client_id = c.id
+      ORDER BY rb.created_at DESC
+    `);
+    return res.status(200).json({ success: true, recurringBills: result.rows });
+  } catch (error) {
+    console.error('Failed to list recurring bills:', error);
+    return res.status(500).json({ success: false, message: 'Database error listing recurring bills.' });
+  }
+};
+
+export const create = async (req: Request, res: Response) => {
+  const { client_id, amount, frequency, next_date, is_active } = req.body;
+
+  if (!client_id || !amount || !frequency || !next_date) {
+    return res.status(400).json({ success: false, message: 'Vendor ID (client_id), Amount, Frequency, and Next Date are required.' });
+  }
+
+  try {
+    const result = await query(`
+      INSERT INTO recurring_bills (client_id, amount, frequency, next_date, is_active)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *;
+    `, [
+      client_id,
+      amount,
+      frequency,
+      next_date,
+      is_active !== undefined ? is_active : true
+    ]);
+    return res.status(201).json({ success: true, recurringBill: result.rows[0] });
+  } catch (error) {
+    console.error('Failed to create recurring bill:', error);
+    return res.status(500).json({ success: false, message: 'Database error creating recurring bill.' });
+  }
+};
+
+export const update = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { client_id, amount, frequency, next_date, is_active } = req.body;
+
+  try {
+    const result = await query(`
+      UPDATE recurring_bills
+      SET client_id = $1, amount = $2, frequency = $3, next_date = $4, is_active = $5, updated_at = NOW()
+      WHERE id = $6
+      RETURNING *;
+    `, [
+      client_id,
+      amount,
+      frequency,
+      next_date,
+      is_active !== undefined ? is_active : true,
+      id
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Recurring bill template not found.' });
+    }
+
+    return res.status(200).json({ success: true, recurringBill: result.rows[0] });
+  } catch (error) {
+    console.error('Failed to update recurring bill:', error);
+    return res.status(500).json({ success: false, message: 'Database error updating recurring bill.' });
+  }
+};
+
+export const deleteRecurring = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const result = await query('DELETE FROM recurring_bills WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Recurring bill template not found.' });
+    }
+    return res.status(200).json({ success: true, message: 'Recurring bill template deleted successfully.' });
+  } catch (error) {
+    console.error('Failed to delete recurring bill:', error);
+    return res.status(500).json({ success: false, message: 'Database error deleting recurring bill.' });
+  }
+};

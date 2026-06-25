@@ -163,7 +163,7 @@ export default function CreateInvoicePage() {
                     <div className="overflow-x-auto p-5">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-outline-variant text-left text-on-surface-variant font-semibold">
+                                <tr className="border-b border-border text-left text-muted-foreground font-semibold">
                                     <th className="pb-3 min-w-[200px]">Item Description</th>
                                     <th className="pb-3 w-24">Qty</th>
                                     <th className="pb-3 w-32">Rate</th>
@@ -175,7 +175,7 @@ export default function CreateInvoicePage() {
                             </thead>
                             <tbody>
                                 {items.map((item, index) => (
-                                    <tr key={item.id} className="border-b border-outline-variant/50">
+                                    <tr key={item.id} className="border-b border-border/50">
                                         <td className="py-3 pr-2">
                                             <input required placeholder="Service or Product" className={inputCls} value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} />
                                         </td>
@@ -197,12 +197,12 @@ export default function CreateInvoicePage() {
                                                 <option value={28}>28%</option>
                                             </select>
                                         </td>
-                                        <td className="py-3 text-right font-bold text-on-surface">
+                                        <td className="py-3 text-right font-bold text-foreground">
                                             {item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                                         </td>
                                         <td className="py-3 text-right">
                                             {items.length > 1 && (
-                                                <button type="button" onClick={() => removeItem(item.id)} className="p-1.5 rounded-full hover:bg-error/10 text-on-surface-variant hover:text-error transition-colors">
+                                                <button type="button" onClick={() => removeItem(item.id)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                                                     <span className="material-symbols-outlined text-[18px]">close</span>
                                                 </button>
                                             )}
@@ -218,7 +218,7 @@ export default function CreateInvoicePage() {
                         </div>
                     </div>
 
-                    <div className="p-5 bg-surface-container-low flex flex-col md:flex-row justify-between gap-8 border-t border-outline-variant">
+                    <div className="p-5 bg-card-container-low flex flex-col md:flex-row justify-between gap-8 border-t border-border">
                         <div className="flex-1 space-y-4">
                             <FormField label="Customer Notes">
                                 <textarea className={cn(inputCls, "h-20 resize-none")} placeholder="Thanks for your business." value={invoiceData.customerNotes} onChange={e => setInvoiceData({...invoiceData, customerNotes: e.target.value})} />
@@ -229,42 +229,42 @@ export default function CreateInvoicePage() {
                         </div>
                         <div className="w-full md:w-80 space-y-3">
                             <div className="flex justify-between text-sm">
-                                <span className="text-on-surface-variant">Sub Total</span>
-                                <span className="font-semibold text-on-surface">{subTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                                <span className="text-muted-foreground">Sub Total</span>
+                                <span className="font-semibold text-foreground">{subTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                             </div>
                             {discountTotal > 0 && (
-                                <div className="flex justify-between text-sm text-error">
+                                <div className="flex justify-between text-sm text-destructive">
                                     <span>Discount</span>
                                     <span>- {discountTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                 </div>
                             )}
                             {taxTotal > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-on-surface-variant">Tax</span>
-                                    <span className="font-semibold text-on-surface">{taxTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                                    <span className="text-muted-foreground">Tax</span>
+                                    <span className="font-semibold text-foreground">{taxTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-sm items-center">
-                                <span className="text-on-surface-variant">Shipping Charges</span>
+                                <span className="text-muted-foreground">Shipping Charges</span>
                                 <input type="number" className={cn(inputCls, "w-24 h-8 px-2 py-1 text-right")} value={invoiceData.shippingCharges} onChange={e => setInvoiceData({...invoiceData, shippingCharges: Number(e.target.value)})} />
                             </div>
                             <div className="flex justify-between text-sm items-center">
-                                <span className="text-on-surface-variant">Round Off</span>
+                                <span className="text-muted-foreground">Round Off</span>
                                 <input type="number" step="0.01" className={cn(inputCls, "w-24 h-8 px-2 py-1 text-right")} value={invoiceData.roundOff} onChange={e => setInvoiceData({...invoiceData, roundOff: Number(e.target.value)})} />
                             </div>
-                            <div className="flex justify-between text-base font-extrabold pt-3 border-t border-outline-variant">
-                                <span className="text-on-surface">Total ({invoiceData.currency})</span>
+                            <div className="flex justify-between text-base font-extrabold pt-3 border-t border-border">
+                                <span className="text-foreground">Total ({invoiceData.currency})</span>
                                 <span className="text-primary">{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
                 </SectionCard>
 
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-surface border-t border-outline-variant flex justify-end gap-3 z-50 md:pl-64">
-                    <button type="button" onClick={() => router.back()} className="px-5 py-2.5 rounded-lg font-bold text-sm text-on-surface-variant hover:bg-surface-container transition-colors">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-card border-t border-border flex justify-end gap-3 z-50 md:pl-64">
+                    <button type="button" onClick={() => router.back()} className="px-5 py-2.5 rounded-lg font-bold text-sm text-muted-foreground hover:bg-card-container transition-colors">
                         Cancel
                     </button>
-                    <button type="submit" disabled={loading} className="px-5 py-2.5 rounded-lg font-bold text-sm bg-primary text-on-primary shadow-sm hover:shadow active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
+                    <button type="submit" disabled={loading} className="px-5 py-2.5 rounded-lg font-bold text-sm bg-primary text-primary-foreground shadow-sm hover:shadow active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
                         {loading ? <span className="material-symbols-outlined animate-spin">refresh</span> : <span className="material-symbols-outlined">save</span>}
                         Save Invoice
                     </button>

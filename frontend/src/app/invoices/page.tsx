@@ -131,13 +131,13 @@ export default function Invoices() {
         subtitle="Track receivables, manage invoice statuses and follow up on overdue amounts."
         actions={
           <div className="flex items-center gap-2">
-            <button onClick={handleExportCSV} className="flex items-center gap-1.5 px-3 py-2 border border-outline-variant rounded-lg text-xs font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">
+            <button onClick={handleExportCSV} className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-xs font-semibold text-muted-foreground hover:bg-card-container transition-colors">
               <span className="material-symbols-outlined text-[16px]">file_download</span>
               Export
             </button>
             <button
               onClick={() => router.push("/invoices/create")}
-              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
             >
               <span className="material-symbols-outlined text-[17px]">add</span>
               New Invoice
@@ -148,7 +148,7 @@ export default function Invoices() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Receivables" value={`₹${summary.totalReceivables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="account_balance_wallet" trend={{ label: "+4.2% from last month", up: true }} />
-        <StatCard label="Overdue" value={`₹${summary.overdueTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="warning" iconColor="text-error" trend={{ label: `${summary.overdueCount} invoices past due`, up: false }} />
+        <StatCard label="Overdue" value={`₹${summary.overdueTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="warning" iconColor="text-destructive" trend={{ label: `${summary.overdueCount} invoices past due`, up: false }} />
         <StatCard label="Paid This Month" value={`₹${summary.paidTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="check_circle" trend={{ label: `${summary.paidCount} payments cleared`, up: true }} />
         <StatCard label="Avg. Collection" value="18 Days" icon="schedule" trend={{ label: "−2 days from average", up: true }} />
       </div>
@@ -161,7 +161,7 @@ export default function Invoices() {
           <div className="flex items-center gap-2">
             <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search invoices..." />
             <FilterSelect value={selectedStatus} onChange={setSelectedStatus} options={["All", "Paid", "Overdue", "Partial", "Sent", "Draft"]} />
-            <button className="p-2 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface-variant transition-colors" title="Print">
+            <button className="p-2 rounded-lg border border-border hover:bg-card-container text-muted-foreground transition-colors" title="Print">
               <span className="material-symbols-outlined text-[18px]">print</span>
             </button>
           </div>
@@ -190,17 +190,17 @@ export default function Invoices() {
                   </Td>
                   <Td className="font-mono font-bold text-primary">{inv.number}</Td>
                   <Td>
-                    <p className="font-bold text-on-surface">{inv.customer_name}</p>
-                    <p className="text-[11px] text-on-surface-variant">{inv.customer_email}</p>
+                    <p className="font-bold text-foreground">{inv.customer_name}</p>
+                    <p className="text-[11px] text-muted-foreground">{inv.customer_email}</p>
                   </Td>
                   <Td className="text-right">
-                    <p className="font-bold text-on-surface">₹{Number(inv.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
-                    {inv.balance !== undefined && <p className="text-[10px] text-on-surface-variant">Bal: ₹{Number(inv.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>}
+                    <p className="font-bold text-foreground">₹{Number(inv.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
+                    {inv.balance !== undefined && <p className="text-[10px] text-muted-foreground">Bal: ₹{Number(inv.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>}
                   </Td>
-                  <Td className={cn(inv.status === "Overdue" ? "text-error font-bold" : "text-on-surface-variant")}>{new Date(inv.due_date).toLocaleDateString()}</Td>
+                  <Td className={cn(inv.status === "Overdue" ? "text-destructive font-bold" : "text-muted-foreground")}>{new Date(inv.due_date).toLocaleDateString()}</Td>
                   <Td><StatusBadge status={inv.status} /></Td>
                   <Td>
-                    <button className="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+                    <button className="p-1 rounded hover:bg-card-container text-muted-foreground hover:text-primary transition-colors">
                       <span className="material-symbols-outlined text-[18px]">more_horiz</span>
                     </button>
                   </Td>
@@ -212,13 +212,13 @@ export default function Invoices() {
         </div>
 
         {/* Pagination */}
-        <div className="px-5 py-3 border-t border-outline-variant flex items-center justify-between bg-surface-container-low">
-          <span className="text-xs text-on-surface-variant">1 – {invoices.length} of {invoices.length}</span>
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between bg-card-container-low">
+          <span className="text-xs text-muted-foreground">1 – {invoices.length} of {invoices.length}</span>
           <div className="flex items-center gap-1">
-            <button disabled className="p-1.5 rounded hover:bg-surface-container text-on-surface-variant disabled:opacity-30 transition-colors">
+            <button disabled className="p-1.5 rounded hover:bg-card-container text-muted-foreground disabled:opacity-30 transition-colors">
               <span className="material-symbols-outlined text-[18px]">chevron_left</span>
             </button>
-            <button disabled className="p-1.5 rounded hover:bg-surface-container text-on-surface-variant disabled:opacity-30 transition-colors">
+            <button disabled className="p-1.5 rounded hover:bg-card-container text-muted-foreground disabled:opacity-30 transition-colors">
               <span className="material-symbols-outlined text-[18px]">chevron_right</span>
             </button>
           </div>

@@ -41,7 +41,7 @@ export default function ProfitLoss() {
         actions={
           <button
             onClick={() => alert("Downloading PDF...")}
-            className="flex items-center gap-1.5 px-4 py-2 border border-outline-variant rounded-lg text-xs font-semibold text-on-surface-variant hover:bg-surface-container transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 border border-border rounded-lg text-xs font-semibold text-muted-foreground hover:bg-card-container transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">download</span>
             Export PDF
@@ -50,16 +50,16 @@ export default function ProfitLoss() {
       />
 
       {/* Filters Bar */}
-      <section className="bg-surface border border-outline-variant rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+      <section className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-6">
           <div className="flex flex-col gap-1">
-            <span className="font-label-md text-[10px] text-on-surface-variant uppercase tracking-wider">
+            <span className="font-label-md text-[10px] text-muted-foreground uppercase tracking-wider">
               Date Range
             </span>
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="bg-surface-container-low border border-outline-variant px-3 py-1.5 rounded-lg text-on-surface-variant font-body-sm text-body-sm cursor-pointer outline-none"
+              className="bg-card-container-low border border-border px-3 py-1.5 rounded-lg text-muted-foreground font-body-sm text-body-sm cursor-pointer outline-none"
             >
               <option value="Jan 1, 2024 - Dec 31, 2024">Jan 1, 2024 - Dec 31, 2024</option>
               <option value="Q1 2024">Q1 2024 (Jan - Mar)</option>
@@ -70,14 +70,14 @@ export default function ProfitLoss() {
           </div>
         </div>
 
-        <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-full border border-outline-variant">
+        <div className="flex items-center gap-1 bg-card-container-low p-1 rounded-full border border-border">
           <button
             onClick={() => setMethod("Accrual")}
             className={cn(
               "px-4 py-1.5 rounded-full text-label-md font-label-md text-xs transition-all",
               method === "Accrual"
                 ? "bg-white shadow-sm text-primary font-bold"
-                : "text-on-surface-variant hover:text-on-surface"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             Accrual
@@ -88,7 +88,7 @@ export default function ProfitLoss() {
               "px-4 py-1.5 rounded-full text-label-md font-label-md text-xs transition-all",
               method === "Cash"
                 ? "bg-white shadow-sm text-primary font-bold"
-                : "text-on-surface-variant hover:text-on-surface"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             Cash
@@ -108,7 +108,7 @@ export default function ProfitLoss() {
           label="Total Expenses"
           value={`₹${(totalCOGS + totalOpsExpenses).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
           icon="trending_down"
-          iconColor="text-error"
+          iconColor="text-destructive"
           trend={{ label: "+2.1% vs last year", up: false }}
         />
         <StatCard
@@ -125,47 +125,47 @@ export default function ProfitLoss() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse font-body-md min-w-[600px]">
             <thead>
-              <tr className="bg-surface-container-low text-on-surface-variant text-label-md uppercase tracking-widest border-b border-outline-variant">
+              <tr className="bg-card-container-low text-muted-foreground text-label-md uppercase tracking-widest border-b border-border">
                 <th className="px-6 py-3 font-semibold text-xs">Account Category</th>
                 <th className="px-6 py-3 font-semibold text-right text-xs">Actual Amount</th>
                 <th className="px-6 py-3 font-semibold text-right text-xs">% of Revenue</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant/30">
+            <tbody className="divide-y divide-border/30">
               {/* Income */}
-              <tr className="bg-surface-container/20">
-                <td className="px-6 py-3 font-bold text-on-surface">Income (Operating Revenue)</td>
+              <tr className="bg-card-container/20">
+                <td className="px-6 py-3 font-bold text-foreground">Income (Operating Revenue)</td>
                 <td className="px-6 py-3 text-right"></td>
                 <td className="px-6 py-3 text-right"></td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Product Sales</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Product Sales</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   ${productSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((productSales / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Service Income</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Service Income</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   ${serviceIncome.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((serviceIncome / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Shipping &amp; Freight</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Shipping &amp; Freight</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   ${shippingFreight.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((shippingFreight / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="bg-surface-container/10 border-t border-outline-variant font-bold text-primary">
+              <tr className="bg-card-container/10 border-t border-border font-bold text-primary">
                 <td className="px-6 py-3 pl-6">Total Operating Revenue</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -174,30 +174,30 @@ export default function ProfitLoss() {
               </tr>
 
               {/* COGS */}
-              <tr className="bg-surface-container/20">
-                <td className="px-6 py-3 font-bold text-on-surface">Cost of Goods Sold (COGS)</td>
+              <tr className="bg-card-container/20">
+                <td className="px-6 py-3 font-bold text-foreground">Cost of Goods Sold (COGS)</td>
                 <td className="px-6 py-3 text-right"></td>
                 <td className="px-6 py-3 text-right"></td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Inventory Materials</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Inventory Materials</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${inventoryMaterials.toLocaleString(undefined, { minimumFractionDigits: 2 })})
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((inventoryMaterials / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Direct Labor</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Direct Labor</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${directLabor.toLocaleString(undefined, { minimumFractionDigits: 2 })})
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((directLabor / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="bg-surface-container/10 border-t border-outline-variant font-bold text-on-surface">
+              <tr className="bg-card-container/10 border-t border-border font-bold text-foreground">
                 <td className="px-6 py-3 pl-6">Total Cost of Goods Sold</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${totalCOGS.toLocaleString(undefined, { minimumFractionDigits: 2 })})
@@ -208,7 +208,7 @@ export default function ProfitLoss() {
               </tr>
 
               {/* Gross Profit */}
-              <tr className="bg-primary/5 font-black text-on-surface">
+              <tr className="bg-primary/5 font-black text-foreground">
                 <td className="px-6 py-4 text-base pl-6">GROSS PROFIT</td>
                 <td className="px-6 py-4 text-right font-mono-data text-base">
                   ${grossProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -219,57 +219,57 @@ export default function ProfitLoss() {
               </tr>
 
               {/* Operating Expenses */}
-              <tr className="bg-surface-container/20">
-                <td className="px-6 py-3 font-bold text-on-surface">Operating Expenses</td>
+              <tr className="bg-card-container/20">
+                <td className="px-6 py-3 font-bold text-foreground">Operating Expenses</td>
                 <td className="px-6 py-3 text-right"></td>
                 <td className="px-6 py-3 text-right"></td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Salaries and Wages</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Salaries and Wages</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${salariesWages.toLocaleString(undefined, { minimumFractionDigits: 2 })})
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((salariesWages / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Marketing &amp; Advertising</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Marketing &amp; Advertising</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${marketingAdvertising.toLocaleString(undefined, { minimumFractionDigits: 2 })})
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((marketingAdvertising / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Rent and Utilities</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Rent and Utilities</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${rentUtilities.toLocaleString(undefined, { minimumFractionDigits: 2 })})
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((rentUtilities / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Technology &amp; Software</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Technology &amp; Software</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${techSoftware.toLocaleString(undefined, { minimumFractionDigits: 2 })})
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((techSoftware / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Taxes &amp; Licenses</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Taxes &amp; Licenses</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${taxesLicenses.toLocaleString(undefined, { minimumFractionDigits: 2 })})
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((taxesLicenses / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
-              <tr className="bg-surface-container/10 border-t border-outline-variant font-bold text-on-surface">
+              <tr className="bg-card-container/10 border-t border-border font-bold text-foreground">
                 <td className="px-6 py-3 pl-6">Total Operating Expenses</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   (${totalOpsExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 })})
@@ -280,23 +280,23 @@ export default function ProfitLoss() {
               </tr>
 
               {/* Other Income/Expenses */}
-              <tr className="bg-surface-container/20">
-                <td className="px-6 py-3 font-bold text-on-surface">Other Income / (Expenses)</td>
+              <tr className="bg-card-container/20">
+                <td className="px-6 py-3 font-bold text-foreground">Other Income / (Expenses)</td>
                 <td className="px-6 py-3 text-right"></td>
                 <td className="px-6 py-3 text-right"></td>
               </tr>
-              <tr className="hover:bg-surface-container-low transition-all">
-                <td className="px-6 py-3 pl-12 text-on-surface-variant">Interest Income</td>
+              <tr className="hover:bg-card-container-low transition-all">
+                <td className="px-6 py-3 pl-12 text-muted-foreground">Interest Income</td>
                 <td className="px-6 py-3 text-right font-mono-data">
                   ${interestIncome.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
-                <td className="px-6 py-3 text-right text-on-surface-variant text-xs">
+                <td className="px-6 py-3 text-right text-muted-foreground text-xs">
                   {((interestIncome / totalRevenue) * 100).toFixed(1)}%
                 </td>
               </tr>
 
               {/* Net Profit */}
-              <tr className="bg-primary text-on-primary font-black">
+              <tr className="bg-primary text-primary-foreground font-black">
                 <td className="px-6 py-5 text-base uppercase tracking-widest pl-6">NET PROFIT</td>
                 <td className="px-6 py-5 text-right font-mono-data text-base">
                   ${netProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -309,7 +309,7 @@ export default function ProfitLoss() {
           </table>
         </div>
 
-        <div className="px-6 py-4 bg-surface-container-low text-[10px] text-on-surface-variant italic border-t border-outline-variant">
+        <div className="px-6 py-4 bg-card-container-low text-[10px] text-muted-foreground italic border-t border-border">
           * Report dynamically generated based on method: {method}. All amounts in ₹ INR. Figures are based on selected Accrual or Cash ledger settings and subject to final audit.
         </div>
       </SectionCard>

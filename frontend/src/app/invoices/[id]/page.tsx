@@ -93,7 +93,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-on-surface-variant animate-pulse">Loading Invoice...</div>;
+    if (loading) return <div className="p-10 text-center text-muted-foreground animate-pulse">Loading Invoice...</div>;
     if (!invoice) return null;
 
     return (
@@ -103,15 +103,15 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                 subtitle={`For ${invoice.customer_name}`}
                 actions={
                     <div className="flex gap-2">
-                        <button onClick={() => router.push(`/invoices/edit/${params.id}`)} className="flex items-center gap-1.5 px-3 py-2 border border-outline-variant rounded-lg text-xs font-semibold hover:bg-surface-container print:hidden">
+                        <button onClick={() => router.push(`/invoices/edit/${params.id}`)} className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-xs font-semibold hover:bg-card-container print:hidden">
                             <span className="material-symbols-outlined text-[16px]">edit</span>
                             Edit
                         </button>
-                        <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-2 border border-outline-variant rounded-lg text-xs font-semibold hover:bg-surface-container print:hidden">
+                        <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-xs font-semibold hover:bg-card-container print:hidden">
                             <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
                             PDF
                         </button>
-                        <button onClick={handleSendEmail} className="flex items-center gap-1.5 px-3 py-2 border border-outline-variant rounded-lg text-xs font-semibold hover:bg-surface-container print:hidden">
+                        <button onClick={handleSendEmail} className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-xs font-semibold hover:bg-card-container print:hidden">
                             <span className="material-symbols-outlined text-[16px]">mail</span>
                             Send Email
                         </button>
@@ -131,43 +131,43 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Side: Preview */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-surface border border-outline-variant rounded-xl shadow-sm p-10 print:shadow-none print:border-none">
+                    <div className="bg-card border border-border rounded-xl shadow-sm p-10 print:shadow-none print:border-none">
                         {/* Header */}
                         <div className="flex justify-between items-start mb-10">
                             <div>
-                                <h1 className="text-3xl font-extrabold text-on-surface tracking-tight">INVOICE</h1>
-                                <p className="text-sm font-bold text-on-surface-variant mt-1">{invoice.number}</p>
+                                <h1 className="text-3xl font-extrabold text-foreground tracking-tight">INVOICE</h1>
+                                <p className="text-sm font-bold text-muted-foreground mt-1">{invoice.number}</p>
                                 <div className="mt-2"><StatusBadge status={invoice.status} /></div>
                             </div>
                             <div className="text-right">
-                                <h3 className="font-bold text-on-surface text-lg">DemandBooks SaaS</h3>
-                                <p className="text-sm text-on-surface-variant mt-1">123 Business Avenue<br/>Tech Park, TP 400101<br/>contact@demandbooks.io</p>
+                                <h3 className="font-bold text-foreground text-lg">DemandBooks SaaS</h3>
+                                <p className="text-sm text-muted-foreground mt-1">123 Business Avenue<br/>Tech Park, TP 400101<br/>contact@demandbooks.io</p>
                             </div>
                         </div>
 
                         {/* Customer Info */}
-                        <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b border-outline-variant">
+                        <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b border-border">
                             <div>
-                                <h4 className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">Bill To</h4>
-                                <p className="font-bold text-on-surface text-base">{invoice.customer_name}</p>
-                                <p className="text-sm text-on-surface-variant mt-1">{invoice.customer_email}</p>
+                                <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Bill To</h4>
+                                <p className="font-bold text-foreground text-base">{invoice.customer_name}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{invoice.customer_email}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <p className="text-on-surface-variant mb-1">Invoice Date:</p>
-                                    <p className="font-semibold text-on-surface">{new Date(invoice.invoice_date).toLocaleDateString()}</p>
+                                    <p className="text-muted-foreground mb-1">Invoice Date:</p>
+                                    <p className="font-semibold text-foreground">{new Date(invoice.invoice_date).toLocaleDateString()}</p>
                                 </div>
                                 <div>
-                                    <p className="text-on-surface-variant mb-1">Due Date:</p>
-                                    <p className="font-semibold text-on-surface">{new Date(invoice.due_date).toLocaleDateString()}</p>
+                                    <p className="text-muted-foreground mb-1">Due Date:</p>
+                                    <p className="font-semibold text-foreground">{new Date(invoice.due_date).toLocaleDateString()}</p>
                                 </div>
                                 <div>
-                                    <p className="text-on-surface-variant mb-1">Terms:</p>
-                                    <p className="font-semibold text-on-surface">{invoice.payment_terms || '—'}</p>
+                                    <p className="text-muted-foreground mb-1">Terms:</p>
+                                    <p className="font-semibold text-foreground">{invoice.payment_terms || '—'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-on-surface-variant mb-1">Reference:</p>
-                                    <p className="font-semibold text-on-surface">{invoice.reference_number || '—'}</p>
+                                    <p className="text-muted-foreground mb-1">Reference:</p>
+                                    <p className="font-semibold text-foreground">{invoice.reference_number || '—'}</p>
                                 </div>
                             </div>
                         </div>
@@ -175,7 +175,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                         {/* Items Table */}
                         <table className="w-full text-sm mb-8">
                             <thead>
-                                <tr className="border-b-2 border-outline-variant text-left text-on-surface-variant font-semibold">
+                                <tr className="border-b-2 border-border text-left text-muted-foreground font-semibold">
                                     <th className="py-2">Description</th>
                                     <th className="py-2 text-right">Qty</th>
                                     <th className="py-2 text-right">Rate</th>
@@ -185,12 +185,12 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                             </thead>
                             <tbody>
                                 {invoice.items.map((item: any) => (
-                                    <tr key={item.id} className="border-b border-outline-variant/50">
-                                        <td className="py-3 font-medium text-on-surface">{item.description}</td>
-                                        <td className="py-3 text-right text-on-surface-variant">{item.quantity} {item.unit}</td>
-                                        <td className="py-3 text-right text-on-surface-variant">{Number(item.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                                        <td className="py-3 text-right text-on-surface-variant">{Number(item.tax_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                                        <td className="py-3 text-right font-bold text-on-surface">{Number(item.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                    <tr key={item.id} className="border-b border-border/50">
+                                        <td className="py-3 font-medium text-foreground">{item.description}</td>
+                                        <td className="py-3 text-right text-muted-foreground">{item.quantity} {item.unit}</td>
+                                        <td className="py-3 text-right text-muted-foreground">{Number(item.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                        <td className="py-3 text-right text-muted-foreground">{Number(item.tax_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                        <td className="py-3 text-right font-bold text-foreground">{Number(item.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -200,34 +200,34 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                         <div className="flex justify-end">
                             <div className="w-64 space-y-3">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-on-surface-variant">Sub Total</span>
-                                    <span className="font-semibold text-on-surface">{Number(invoice.sub_total).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                                    <span className="text-muted-foreground">Sub Total</span>
+                                    <span className="font-semibold text-foreground">{Number(invoice.sub_total).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 {Number(invoice.discount_total) > 0 && (
-                                    <div className="flex justify-between text-sm text-error">
+                                    <div className="flex justify-between text-sm text-destructive">
                                         <span>Discount</span>
                                         <span>- {Number(invoice.discount_total).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 )}
                                 {Number(invoice.tax_total) > 0 && (
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-on-surface-variant">Tax</span>
-                                        <span className="font-semibold text-on-surface">{Number(invoice.tax_total).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                                        <span className="text-muted-foreground">Tax</span>
+                                        <span className="font-semibold text-foreground">{Number(invoice.tax_total).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 )}
                                 {Number(invoice.shipping_charges) > 0 && (
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-on-surface-variant">Shipping</span>
-                                        <span className="font-semibold text-on-surface">{Number(invoice.shipping_charges).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                                        <span className="text-muted-foreground">Shipping</span>
+                                        <span className="font-semibold text-foreground">{Number(invoice.shipping_charges).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-lg font-extrabold py-3 border-t-2 border-outline-variant">
-                                    <span className="text-on-surface">Total ({invoice.currency})</span>
+                                <div className="flex justify-between text-lg font-extrabold py-3 border-t-2 border-border">
+                                    <span className="text-foreground">Total ({invoice.currency})</span>
                                     <span className="text-primary">{Number(invoice.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                 </div>
-                                <div className="flex justify-between text-sm font-bold bg-surface-container-low p-2 rounded">
-                                    <span className="text-on-surface-variant">Balance Due</span>
-                                    <span className="text-error">{Number(invoice.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                                <div className="flex justify-between text-sm font-bold bg-card-container-low p-2 rounded">
+                                    <span className="text-muted-foreground">Balance Due</span>
+                                    <span className="text-destructive">{Number(invoice.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
                         </div>
@@ -240,10 +240,10 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                         <SectionCard title="Payment History">
                             <div className="space-y-4">
                                 {invoice.payments.map((payment: any) => (
-                                    <div key={payment.id} className="flex justify-between items-center pb-4 border-b border-outline-variant/50 last:border-0 last:pb-0">
+                                    <div key={payment.id} className="flex justify-between items-center pb-4 border-b border-border/50 last:border-0 last:pb-0">
                                         <div>
-                                            <p className="font-bold text-sm text-on-surface">{Number(payment.amount_received).toLocaleString("en-IN", { minimumFractionDigits: 2 })} {invoice.currency}</p>
-                                            <p className="text-xs text-on-surface-variant">{new Date(payment.payment_date).toLocaleDateString()} via {payment.payment_method}</p>
+                                            <p className="font-bold text-sm text-foreground">{Number(payment.amount_received).toLocaleString("en-IN", { minimumFractionDigits: 2 })} {invoice.currency}</p>
+                                            <p className="text-xs text-muted-foreground">{new Date(payment.payment_date).toLocaleDateString()} via {payment.payment_method}</p>
                                         </div>
                                         <span className="material-symbols-outlined text-green-600 text-xl">check_circle</span>
                                     </div>
@@ -253,13 +253,13 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                     )}
 
                     <SectionCard title="Activity Timeline">
-                        <div className="relative pl-4 border-l-2 border-outline-variant space-y-6">
+                        <div className="relative pl-4 border-l-2 border-border space-y-6">
                             {invoice.activity.map((log: any) => (
                                 <div key={log.id} className="relative">
-                                    <div className="absolute -left-[23px] top-0 w-3 h-3 bg-primary rounded-full ring-4 ring-surface" />
-                                    <p className="font-bold text-xs text-on-surface">{log.action}</p>
-                                    <p className="text-[11px] text-on-surface-variant mt-0.5">{log.remarks}</p>
-                                    <p className="text-[10px] text-on-surface-variant/70 mt-1">{new Date(log.timestamp).toLocaleString()} • {log.user_name || 'System'}</p>
+                                    <div className="absolute -left-[23px] top-0 w-3 h-3 bg-primary rounded-full ring-4 ring-card" />
+                                    <p className="font-bold text-xs text-foreground">{log.action}</p>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">{log.remarks}</p>
+                                    <p className="text-[10px] text-muted-foreground/70 mt-1">{new Date(log.timestamp).toLocaleString()} • {log.user_name || 'System'}</p>
                                 </div>
                             ))}
                         </div>
@@ -271,9 +271,9 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
             {showPaymentModal && (
                 <Modal title="Record Payment" onClose={() => setShowPaymentModal(false)}>
                     <form onSubmit={handleRecordPayment} className="p-6 space-y-4">
-                        <div className="p-3 bg-surface-container-low rounded-lg flex justify-between items-center mb-2">
-                            <span className="text-sm font-semibold text-on-surface-variant">Outstanding Balance</span>
-                            <span className="font-bold text-error">{Number(invoice.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })} {invoice.currency}</span>
+                        <div className="p-3 bg-card-container-low rounded-lg flex justify-between items-center mb-2">
+                            <span className="text-sm font-semibold text-muted-foreground">Outstanding Balance</span>
+                            <span className="font-bold text-destructive">{Number(invoice.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })} {invoice.currency}</span>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
@@ -299,8 +299,8 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                             <input className={inputCls} placeholder="Transaction ID, Cheque No" value={paymentRef} onChange={e => setPaymentRef(e.target.value)} />
                         </FormField>
 
-                        <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-                            <button type="button" onClick={() => setShowPaymentModal(false)} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant">Cancel</button>
+                        <div className="pt-4 border-t border-border flex justify-end gap-3">
+                            <button type="button" onClick={() => setShowPaymentModal(false)} className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-muted-foreground">Cancel</button>
                             <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors">Record Payment</button>
                         </div>
                     </form>

@@ -77,7 +77,7 @@ export default function Products() {
         title="Products & Services"
         subtitle="Manage your product catalog, pricing, and stock levels."
         actions={
-          <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm">
+          <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm">
             <span className="material-symbols-outlined text-[17px]">add</span>
             Add Product
           </button>
@@ -87,8 +87,8 @@ export default function Products() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Products" value={String(products.length)} icon="inventory_2" trend={{ label: "+12% this month", up: true }} />
         <StatCard label="Inventory Value" value={`₹${inventoryValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="sell" trend={{ label: "72% capacity used", up: null }} />
-        <StatCard label="Out of Stock" value={String(outOfStock)} icon="remove_shopping_cart" iconColor="text-error" trend={{ label: "Needs restocking", up: false }} />
-        <StatCard label="Low Stock Alerts" value={String(lowStock)} icon="warning" iconColor="text-error" trend={{ label: "Monitor closely", up: null }} />
+        <StatCard label="Out of Stock" value={String(outOfStock)} icon="remove_shopping_cart" iconColor="text-destructive" trend={{ label: "Needs restocking", up: false }} />
+        <StatCard label="Low Stock Alerts" value={String(lowStock)} icon="warning" iconColor="text-destructive" trend={{ label: "Monitor closely", up: null }} />
       </div>
 
       <SectionCard title="Product Catalog" subtitle={`${filtered.length} products`} noPadding
@@ -118,25 +118,25 @@ export default function Products() {
                 <TableRow key={product.sku}>
                   <Td>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface-container flex items-center justify-center shrink-0 relative border border-outline-variant">
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-card-container flex items-center justify-center shrink-0 relative border border-border">
                         {product.imageUrl ? (
                           <Image src={product.imageUrl} alt={product.name} fill sizes="40px" className="object-cover" />
                         ) : (
-                          <span className="material-symbols-outlined text-on-surface-variant text-[20px]">inventory_2</span>
+                          <span className="material-symbols-outlined text-muted-foreground text-[20px]">inventory_2</span>
                         )}
                       </div>
-                      <p className="font-bold text-on-surface text-sm">{product.name}</p>
+                      <p className="font-bold text-foreground text-sm">{product.name}</p>
                     </div>
                   </Td>
                   <Td className="font-mono text-[11px] text-primary">{product.sku}</Td>
-                  <Td className="text-on-surface-variant">{product.category}</Td>
-                  <Td className="text-right font-bold font-mono text-on-surface">₹{product.unitPrice.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</Td>
+                  <Td className="text-muted-foreground">{product.category}</Td>
+                  <Td className="text-right font-bold font-mono text-foreground">₹{product.unitPrice.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</Td>
                   <Td>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-surface-container rounded-full h-1.5 w-20">
+                      <div className="flex-1 bg-card-container rounded-full h-1.5 w-20">
                         <div className={cn("h-full rounded-full", product.stockLevel === 0 ? "w-0" : product.status === "Low Stock" ? "bg-amber-500 w-1/4" : "bg-green-500 w-3/4")} />
                       </div>
-                      <span className="text-xs text-on-surface-variant w-8 text-right">{product.stockLevel}</span>
+                      <span className="text-xs text-muted-foreground w-8 text-right">{product.stockLevel}</span>
                     </div>
                   </Td>
                   <Td><StatusBadge status={product.status} /></Td>
@@ -168,9 +168,9 @@ export default function Products() {
               <FormField label="Unit Price (₹)"><input type="number" step="0.01" required placeholder="0.00" className={inputCls} value={newPrice} onChange={(e) => setNewPrice(e.target.value)} /></FormField>
               <FormField label="Stock Level"><input type="number" placeholder="0" className={inputCls} value={newStock} onChange={(e) => setNewStock(e.target.value)} /></FormField>
             </div>
-            <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Add Product</button>
+            <div className="pt-4 border-t border-border flex justify-end gap-3">
+              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-card-container transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Add Product</button>
             </div>
           </form>
         </Modal>
@@ -179,16 +179,16 @@ export default function Products() {
       {adjustProduct && (
         <Modal title={`Adjust Stock: ${adjustProduct.name}`} onClose={() => setAdjustProduct(null)}>
           <form onSubmit={handleAdjust} className="p-6 space-y-4">
-            <div className="p-3 bg-surface-container-low rounded-lg flex items-center justify-between">
-              <span className="text-xs font-semibold text-on-surface-variant">Current Stock</span>
-              <span className="font-bold text-on-surface">{adjustProduct.stockLevel} units</span>
+            <div className="p-3 bg-card-container-low rounded-lg flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">Current Stock</span>
+              <span className="font-bold text-foreground">{adjustProduct.stockLevel} units</span>
             </div>
             <FormField label="New Stock Quantity">
               <input type="number" required min={0} placeholder="Enter new stock quantity" className={inputCls} value={newStockQty} onChange={(e) => setNewStockQty(e.target.value)} />
             </FormField>
-            <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-              <button type="button" onClick={() => setAdjustProduct(null)} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Update Stock</button>
+            <div className="pt-4 border-t border-border flex justify-end gap-3">
+              <button type="button" onClick={() => setAdjustProduct(null)} className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-card-container transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Update Stock</button>
             </div>
           </form>
         </Modal>

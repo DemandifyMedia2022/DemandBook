@@ -71,7 +71,7 @@ function ResetPasswordForm() {
         <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-xs rounded-xl p-3 flex flex-col items-center gap-2.5 animate-in fade-in duration-200 text-center">
           <span className="material-symbols-outlined text-[32px] mt-2">check_circle</span>
           <span className="font-semibold">{message}</span>
-          <Link href="/login" className="mt-4 px-4 py-2 bg-primary hover:bg-primary/90 text-on-primary rounded-lg transition-colors font-bold shadow-lg shadow-primary/20">
+          <Link href="/login" className="mt-4 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors font-bold shadow-lg shadow-primary/20">
             Log In Now
           </Link>
         </div>
@@ -120,7 +120,7 @@ function ResetPasswordForm() {
           <button
             type="submit"
             disabled={loading || !token}
-            className="w-full mt-2 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary/95 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+            className="w-full mt-2 py-2.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/95 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
           >
             {loading ? "Updating..." : "Update Password"}
           </button>
@@ -134,12 +134,12 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(67,56,202,0.22),rgba(255,255,255,0))] px-4">
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-secondary-container/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8 flex flex-col items-center">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-secondary-container flex items-center justify-center shadow-lg shadow-primary/20 mb-3">
-            <span className="material-symbols-outlined text-on-primary text-2xl font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>
+            <span className="material-symbols-outlined text-primary-foreground text-2xl font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>
               key
             </span>
           </div>

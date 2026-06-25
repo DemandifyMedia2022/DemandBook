@@ -75,7 +75,7 @@ export default function Bills() {
         actions={
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
           >
             <span className="material-symbols-outlined text-[17px]">add</span>
             New Bill
@@ -85,7 +85,7 @@ export default function Bills() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Outstanding Payables" value={`₹${totalPayable.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="receipt_long" trend={{ label: `${bills.filter(b => b.status !== "Paid").length} open bills`, up: null }} />
-        <StatCard label="Overdue Amount" value={`₹${overdueTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="warning" iconColor="text-error" trend={{ label: "Needs immediate action", up: false }} />
+        <StatCard label="Overdue Amount" value={`₹${overdueTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="warning" iconColor="text-destructive" trend={{ label: "Needs immediate action", up: false }} />
         <StatCard label="Cleared Bills" value={String(paidCount)} icon="check_circle" trend={{ label: "Bills settled this month", up: true }} />
       </div>
 
@@ -117,17 +117,17 @@ export default function Bills() {
               {filtered.map((bill) => (
                 <TableRow key={bill.number}>
                   <Td className="font-mono font-bold text-primary">{bill.number}</Td>
-                  <Td className="font-semibold text-on-surface">{bill.vendor}</Td>
+                  <Td className="font-semibold text-foreground">{bill.vendor}</Td>
                   <Td>
-                    <span className="flex items-center gap-1 text-on-surface-variant">
+                    <span className="flex items-center gap-1 text-muted-foreground">
                       <span className="material-symbols-outlined text-[15px]">credit_card</span>
                       {bill.paymentMethod}
                     </span>
                   </Td>
-                  <Td className="text-right font-bold font-mono text-on-surface">
+                  <Td className="text-right font-bold font-mono text-foreground">
                     ₹{bill.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </Td>
-                  <Td className={cn(bill.status === "Overdue" ? "text-error font-bold" : "text-on-surface-variant")}>
+                  <Td className={cn(bill.status === "Overdue" ? "text-destructive font-bold" : "text-muted-foreground")}>
                     {bill.clearedDate ? <span className="text-green-600">Cleared {bill.clearedDate}</span> : bill.dueDate}
                   </Td>
                   <Td><StatusBadge status={bill.status} /></Td>
@@ -183,9 +183,9 @@ export default function Bills() {
                 {["Bank Transfer", "Credit Card", "ACH", "Wire", "UPI", "Cash"].map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </FormField>
-            <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Create Bill</button>
+            <div className="pt-4 border-t border-border flex justify-end gap-3">
+              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-card-container transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Create Bill</button>
             </div>
           </form>
         </Modal>

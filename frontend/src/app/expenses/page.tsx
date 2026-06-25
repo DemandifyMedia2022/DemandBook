@@ -88,7 +88,7 @@ export default function Expenses() {
         actions={
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
           >
             <span className="material-symbols-outlined text-[17px]">add</span>
             Add Expense
@@ -137,8 +137,8 @@ export default function Expenses() {
                         </span>
                       </div>
                       <div>
-                        <p className="font-bold text-on-surface text-sm">{exp.merchant}</p>
-                        <p className="text-[11px] text-on-surface-variant">{exp.id}</p>
+                        <p className="font-bold text-foreground text-sm">{exp.merchant}</p>
+                        <p className="text-[11px] text-muted-foreground">{exp.id}</p>
                       </div>
                     </div>
                   </Td>
@@ -147,17 +147,17 @@ export default function Expenses() {
                       {exp.category}
                     </span>
                   </Td>
-                  <Td className="text-on-surface-variant">{exp.date}</Td>
-                  <Td className="text-right font-bold font-mono text-on-surface">
+                  <Td className="text-muted-foreground">{exp.date}</Td>
+                  <Td className="text-right font-bold font-mono text-foreground">
                     ₹{exp.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </Td>
                   <Td><StatusBadge status={exp.status} /></Td>
                   <Td>
                     <div className="flex items-center gap-1">
-                      <button className="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Edit">
+                      <button className="p-1.5 rounded hover:bg-card-container text-muted-foreground hover:text-primary transition-colors" title="Edit">
                         <span className="material-symbols-outlined text-[16px]">edit</span>
                       </button>
-                      <button className="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-error transition-colors" title="Delete">
+                      <button className="p-1.5 rounded hover:bg-card-container text-muted-foreground hover:text-destructive transition-colors" title="Delete">
                         <span className="material-symbols-outlined text-[16px]">delete</span>
                       </button>
                     </div>
@@ -203,9 +203,9 @@ export default function Expenses() {
             <FormField label="Amount (₹)">
               <input type="number" step="0.01" required placeholder="0.00" className={inputCls} value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
             </FormField>
-            <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Add Expense</button>
+            <div className="pt-4 border-t border-border flex justify-end gap-3">
+              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-card-container transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Add Expense</button>
             </div>
           </form>
         </Modal>

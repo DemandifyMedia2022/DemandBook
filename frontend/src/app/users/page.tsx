@@ -55,7 +55,7 @@ export default function UserManagement() {
         actions={
           <button
             onClick={() => setShowInviteModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
           >
             <span className="material-symbols-outlined text-[17px]">person_add</span>
             Invite User
@@ -74,26 +74,26 @@ export default function UserManagement() {
 
       {/* Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-surface-container border border-outline-variant p-5 rounded-xl flex flex-col gap-3">
+        <div className="bg-card-container border border-border p-5 rounded-xl flex flex-col gap-3">
           <span className="material-symbols-outlined text-primary text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>security</span>
-          <h3 className="font-bold text-sm text-on-surface">Role Definitions</h3>
-          <p className="text-xs text-on-surface-variant leading-relaxed">Administrators have full access to billing, user management, and ledger configurations.</p>
+          <h3 className="font-bold text-sm text-foreground">Role Definitions</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">Administrators have full access to billing, user management, and ledger configurations.</p>
           <button className="text-primary text-xs font-semibold flex items-center gap-1 hover:underline mt-auto">
             Manage Permissions <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
           </button>
         </div>
-        <div className="bg-surface-container border border-outline-variant p-5 rounded-xl flex flex-col gap-3">
+        <div className="bg-card-container border border-border p-5 rounded-xl flex flex-col gap-3">
           <span className="material-symbols-outlined text-secondary text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
-          <h3 className="font-bold text-sm text-on-surface">Audit Trail</h3>
-          <p className="text-xs text-on-surface-variant leading-relaxed">Track user activities, login timestamps, and critical data changes across the system.</p>
+          <h3 className="font-bold text-sm text-foreground">Audit Trail</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">Track user activities, login timestamps, and critical data changes across the system.</p>
           <button className="text-primary text-xs font-semibold flex items-center gap-1 hover:underline mt-auto">
             View Logs <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
           </button>
         </div>
-        <div className="bg-primary text-on-primary p-5 rounded-xl flex flex-col gap-3 shadow-lg">
-          <span className="material-symbols-outlined text-on-primary text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>mail</span>
+        <div className="bg-primary text-primary-foreground p-5 rounded-xl flex flex-col gap-3 shadow-lg">
+          <span className="material-symbols-outlined text-primary-foreground text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>mail</span>
           <h3 className="font-bold text-sm">Invitation Portal</h3>
-          <p className="text-on-primary/80 text-xs leading-relaxed">Send bulk invites to your accounting team or external auditors with custom expiry dates.</p>
+          <p className="text-primary-foreground/80 text-xs leading-relaxed">Send bulk invites to your accounting team or external auditors with custom expiry dates.</p>
           <button className="bg-white text-primary px-4 py-2 rounded-lg font-bold text-xs w-fit hover:bg-opacity-90 transition-all mt-auto">
             Bulk Invite
           </button>

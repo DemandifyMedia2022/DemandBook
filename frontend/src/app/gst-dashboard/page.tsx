@@ -44,10 +44,10 @@ export default function GSTDashboard() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="font-display-lg text-display-lg text-on-surface">
+          <h2 className="font-display-lg text-display-lg text-foreground">
             GST Dashboard
           </h2>
-          <p className="text-on-surface-variant font-body-lg">
+          <p className="text-muted-foreground font-body-lg">
             Financial Year 2023-24 • {period}
           </p>
         </div>
@@ -57,14 +57,14 @@ export default function GSTDashboard() {
               const newQ = prompt("Enter Period (e.g. July - September Quarter):");
               if (newQ) setPeriod(newQ);
             }}
-            className="flex items-center gap-1 bg-surface border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container-high transition-colors text-xs font-semibold text-on-surface-variant"
+            className="flex items-center gap-1 bg-card border border-border px-4 py-2 rounded-lg hover:bg-card-container-high transition-colors text-xs font-semibold text-muted-foreground"
           >
             <span className="material-symbols-outlined text-[16px]">calendar_today</span>
             Change Period
           </button>
           <button
             onClick={() => alert("Reconciling GST portal data...")}
-            className="flex items-center gap-1 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 active:scale-95 transition-all text-xs font-semibold"
+            className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 active:scale-95 transition-all text-xs font-semibold"
           >
             <span className="material-symbols-outlined text-[16px]">sync</span>
             Reconcile Portal

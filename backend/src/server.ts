@@ -19,6 +19,25 @@ import productRoutes from './api/products/routes';
 import adminRoutes from './api/admins/routes';
 import organizationRoutes from './api/settings/organization/routes';
 
+import quotesRoutes from './api/quotes/routes';
+import salesOrdersRoutes from './api/sales-orders/routes';
+import deliveryChallansRoutes from './api/delivery-challans/routes';
+import creditNotesRoutes from './api/credit-notes/routes';
+import ewayBillsRoutes from './api/eway-bills/routes';
+import paymentsReceivedRoutes from './api/payments-received/routes';
+import recurringInvoicesRoutes from './api/recurring-invoices/routes';
+import recurringExpensesRoutes from './api/recurring-expenses/routes';
+import purchaseOrdersRoutes from './api/purchase-orders/routes';
+import recurringBillsRoutes from './api/recurring-bills/routes';
+import paymentsMadeRoutes from './api/payments-made/routes';
+import vendorCreditsRoutes from './api/vendor-credits/routes';
+import projectsRoutes from './api/projects/routes';
+import timesheetsRoutes from './api/timesheets/routes';
+import bankingRoutes from './api/banking/routes';
+import complianceRoutes from './api/compliance/routes';
+import accountantRoutes from './api/accountant/routes';
+import documentsRoutes from './api/documents/routes';
+
 const app = express();
 const PORT = process.env.PORT || 8888;
 
@@ -71,6 +90,25 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings/organization', organizationRoutes);
+
+app.use('/api/quotes', quotesRoutes);
+app.use('/api/sales-orders', salesOrdersRoutes);
+app.use('/api/delivery-challans', deliveryChallansRoutes);
+app.use('/api/credit-notes', creditNotesRoutes);
+app.use('/api/eway-bills', ewayBillsRoutes);
+app.use('/api/payments-received', paymentsReceivedRoutes);
+app.use('/api/recurring-invoices', recurringInvoicesRoutes);
+app.use('/api/recurring-expenses', recurringExpensesRoutes);
+app.use('/api/purchase-orders', purchaseOrdersRoutes);
+app.use('/api/recurring-bills', recurringBillsRoutes);
+app.use('/api/payments-made', paymentsMadeRoutes);
+app.use('/api/vendor-credits', vendorCreditsRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/timesheets', timesheetsRoutes);
+app.use('/api/banking', bankingRoutes);
+app.use('/api/compliance', complianceRoutes);
+app.use('/api/accountant', accountantRoutes);
+app.use('/api/documents', documentsRoutes);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SYSTEM MIDDLEWARES

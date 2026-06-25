@@ -24,7 +24,7 @@ export default function AccessDeniedPage() {
         <div className="w-full flex flex-col gap-3">
           <Link
             href="/"
-            className="w-full py-2.5 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary/95 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+            className="w-full py-2.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/95 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
           >
             <span className="material-symbols-outlined text-[18px]">home</span>
             Return to Dashboard

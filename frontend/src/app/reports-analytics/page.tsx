@@ -36,7 +36,7 @@ const initialGenerated: GeneratedReport[] = [
     dateRange: "Jul 01, 2023 - Sep 30, 2023",
     generatedBy: "Alex Sterling",
     status: "Ready",
-    iconBg: "bg-primary-fixed-dim",
+    iconBg: "bg-primary-dim",
     iconColor: "text-primary",
     icon: "description",
   },
@@ -45,7 +45,7 @@ const initialGenerated: GeneratedReport[] = [
     dateRange: "Oct 01, 2023 - Oct 31, 2023",
     generatedBy: "Alex Sterling",
     status: "Ready",
-    iconBg: "bg-secondary-fixed-dim",
+    iconBg: "bg-secondary-dim",
     iconColor: "text-secondary",
     icon: "inventory",
   },
@@ -73,7 +73,7 @@ export default function ReportsAnalytics() {
       dateRange: "Oct 01, 2023 - Oct 25, 2023",
       generatedBy: "Alex Sterling",
       status: "Ready",
-      iconBg: "bg-primary-fixed-dim",
+      iconBg: "bg-primary-dim",
       iconColor: "text-primary",
       icon: "analytics",
     };
@@ -85,20 +85,20 @@ export default function ReportsAnalytics() {
       {/* Header Row */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <nav className="flex text-xs font-semibold text-on-surface-variant mb-1 uppercase tracking-wider">
+          <nav className="flex text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
             <span>Organization</span>
             <span className="mx-2">/</span>
             <span className="text-primary font-bold">Reports</span>
           </nav>
-          <h2 className="font-headline-lg text-headline-lg text-on-surface">
+          <h2 className="font-headline-lg text-headline-lg text-foreground">
             Reports &amp; Analytics
           </h2>
-          <p className="text-on-surface-variant mt-1 text-body-md">
+          <p className="text-muted-foreground mt-1 text-body-md">
             Real-time financial insights and deep-dive operational metrics.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-lg border border-outline-variant text-xs font-bold text-on-surface-variant">
+          <div className="flex items-center gap-2 bg-card-container px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-muted-foreground">
             <span className="material-symbols-outlined text-sm">calendar_month</span>
             <select
               value={timePeriod}
@@ -112,7 +112,7 @@ export default function ReportsAnalytics() {
           </div>
           <button
             onClick={handleCreateReport}
-            className="bg-primary text-on-primary px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:shadow-lg transition-all active:scale-95"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:shadow-lg transition-all active:scale-95"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             Create Custom Report

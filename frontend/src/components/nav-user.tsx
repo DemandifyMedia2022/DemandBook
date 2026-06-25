@@ -14,7 +14,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserIcon, BellIcon, CommandIcon, LifeBuoyIcon, BookOpenIcon, CreditCardIcon, LogOutIcon } from "lucide-react";
+import { UserIcon, BellIcon, CommandIcon, LifeBuoyIcon, GraduationCapIcon, CreditCardIcon, LogOutIcon } from "lucide-react";
 
 const user = {
 	name: "Shaban Haider",
@@ -38,9 +38,6 @@ export function NavUser() {
 							<br />
 							<div className="max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap text-muted-foreground text-xs">
 								{user.email}
-							</div>
-							<div className="mt-0.5 text-[10px] text-muted-foreground">
-								Store owner
 							</div>
 						</div>
 					</DropdownMenuLabel>
@@ -71,12 +68,12 @@ export function NavUser() {
 					<DropdownMenuItem>
 						<LifeBuoyIcon
 						/>
-						Seller help
+						Help center
 					</DropdownMenuItem>
 					<DropdownMenuItem>
-						<BookOpenIcon
+						<GraduationCapIcon
 						/>
-						Seller guides
+						Agent training
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
@@ -84,7 +81,7 @@ export function NavUser() {
 					<DropdownMenuItem>
 						<CreditCardIcon
 						/>
-						Plan & billing
+						Subscription
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />

@@ -7,7 +7,7 @@ import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
 import { CustomSidebarTrigger } from "@/components/custom-sidebar-trigger";
 import { navLinks } from "@/components/app-shared";
 import { NavUser } from "@/components/nav-user";
-import { BellIcon } from "lucide-react";
+import { SendIcon, BellIcon } from "lucide-react";
 
 const activeItem = navLinks.find((item) => item.isActive);
 
@@ -15,7 +15,7 @@ export function AppHeader() {
 	return (
 		<header
 			className={cn(
-				"pxx-4 mb-6 flex items-center justify-between gap-2 md:px-2"
+				"sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6"
 			)}
 		>
 			<div className="flex items-center gap-3">
@@ -27,7 +27,11 @@ export function AppHeader() {
 				<AppBreadcrumbs page={activeItem} />
 			</div>
 			<div className="flex items-center gap-3">
-				<Button aria-label="Notifications" size="icon" variant="ghost">
+				<Button size="icon-sm" variant="outline">
+					<SendIcon
+					/>
+				</Button>
+				<Button aria-label="Notifications" size="icon-sm" variant="outline">
 					<BellIcon
 					/>
 				</Button>

@@ -3,6 +3,7 @@ import { Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import AppLayout from "@/components/AppLayout";
 import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -33,7 +34,9 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-on-background overflow-hidden antialiased">
-        <AppLayout>{children}</AppLayout>
+        <TooltipProvider>
+          <AppLayout>{children}</AppLayout>
+        </TooltipProvider>
       </body>
     </html>
   );

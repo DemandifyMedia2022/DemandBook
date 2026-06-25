@@ -27,7 +27,7 @@ const roleColors: Record<User["role"], string> = {
   Staff: "bg-slate-100 text-slate-600",
 };
 
-const avatarColors = ["bg-primary text-on-primary", "bg-secondary text-on-secondary", "bg-amber-500 text-white", "bg-teal-600 text-white"];
+const avatarColors = ["bg-primary text-primary-foreground", "bg-secondary text-secondary-foreground", "bg-amber-500 text-white", "bg-teal-600 text-white"];
 
 export function UserTable({ users, onRemoveUser }: UserTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,8 +64,8 @@ export function UserTable({ users, onRemoveUser }: UserTableProps) {
                       {user.initials}
                     </div>
                     <div>
-                      <p className="font-bold text-on-surface text-sm">{user.name}</p>
-                      <p className="text-[11px] text-on-surface-variant">{user.email}</p>
+                      <p className="font-bold text-foreground text-sm">{user.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
                 </Td>
@@ -80,15 +80,15 @@ export function UserTable({ users, onRemoveUser }: UserTableProps) {
                     {user.status}
                   </span>
                 </Td>
-                <Td className="text-on-surface-variant text-xs">{user.lastActivity}</Td>
+                <Td className="text-muted-foreground text-xs">{user.lastActivity}</Td>
                 <Td>
                   <div className="flex items-center gap-1">
-                    <button className="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Edit">
+                    <button className="p-1.5 rounded hover:bg-card-container text-muted-foreground hover:text-primary transition-colors" title="Edit">
                       <span className="material-symbols-outlined text-[16px]">edit</span>
                     </button>
                     <button
                       onClick={() => onRemoveUser(user.id)}
-                      className="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-error transition-colors"
+                      className="p-1.5 rounded hover:bg-card-container text-muted-foreground hover:text-destructive transition-colors"
                       title="Remove"
                     >
                       <span className="material-symbols-outlined text-[16px]">person_remove</span>

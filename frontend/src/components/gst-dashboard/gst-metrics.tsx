@@ -31,7 +31,7 @@ function GstMetricCard({
   return (
     <div
       className={cn(
-        "bg-surface border border-outline-variant p-6 rounded-xl flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow",
+        "bg-card border border-border p-6 rounded-xl flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow",
         pulse && "animate-pulse"
       )}
     >
@@ -44,7 +44,7 @@ function GstMetricCard({
         </span>
       </div>
       <div className="mt-6">
-        <p className="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+        <p className="text-muted-foreground font-label-md text-label-md uppercase tracking-wider">
           {label}
         </p>
         <h3 className="font-headline-md text-headline-md font-bold mt-1">{value}</h3>
@@ -60,14 +60,14 @@ export function GSTMetrics() {
       <GstMetricCard
         icon="account_balance_wallet"
         iconColor="text-primary"
-        iconBg="bg-secondary-fixed"
+        iconBg="bg-secondary"
         badgeText="↑ 12%"
         badgeColorClass="text-red-600"
         badgeBgClass="bg-red-100"
         label="Total Tax Liability"
         value="₹12,45,600"
         footer={
-          <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-card-container rounded-full overflow-hidden">
             <div className="h-full bg-primary w-3/4"></div>
           </div>
         }
@@ -76,13 +76,13 @@ export function GSTMetrics() {
       <GstMetricCard
         icon="payments"
         iconColor="text-secondary"
-        iconBg="bg-secondary-fixed"
+        iconBg="bg-secondary"
         badgeText="↓ 4%"
         badgeColorClass="text-green-600"
         badgeBgClass="bg-green-100"
         label="ITC Available (GSTR-2B)"
         value="₹8,12,300"
-        footer={<p className="text-xs text-on-surface-variant font-semibold">Matched: 94.2%</p>}
+        footer={<p className="text-xs text-muted-foreground font-semibold">Matched: 94.2%</p>}
       />
 
       <GstMetricCard
@@ -90,7 +90,7 @@ export function GSTMetrics() {
         iconColor="text-tertiary"
         iconBg="bg-tertiary-fixed"
         badgeText="Filed"
-        badgeColorClass="text-on-surface-variant"
+        badgeColorClass="text-muted-foreground"
         badgeBgClass="bg-slate-100"
         label="GSTR-1 (May 2024)"
         value="ARN: 1234...890"
@@ -99,14 +99,14 @@ export function GSTMetrics() {
 
       <GstMetricCard
         icon="priority_high"
-        iconColor="text-error"
-        iconBg="bg-error-container"
+        iconColor="text-destructive"
+        iconBg="bg-destructive/15"
         badgeText="Draft"
-        badgeColorClass="text-error"
+        badgeColorClass="text-destructive"
         badgeBgClass="bg-red-100"
         label="GSTR-3B (May 2024)"
         value="Unfiled"
-        footer={<p className="text-xs text-error font-bold">Due in: 4 Days</p>}
+        footer={<p className="text-xs text-destructive font-bold">Due in: 4 Days</p>}
         pulse
       />
     </div>

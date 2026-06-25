@@ -19,38 +19,38 @@ export function TaxRatesTable({ taxRates }: TaxRatesTableProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse font-body-md min-w-[700px]">
         <thead>
-          <tr className="bg-surface-container-low border-b border-outline-variant">
-            <th className="px-6 py-3 font-label-md text-label-md text-on-surface-variant uppercase text-xs">
+          <tr className="bg-card-container-low border-b border-border">
+            <th className="px-6 py-3 font-label-md text-label-md text-muted-foreground uppercase text-xs">
               Tax Name
             </th>
-            <th className="px-6 py-3 font-label-md text-label-md text-on-surface-variant uppercase text-xs">
+            <th className="px-6 py-3 font-label-md text-label-md text-muted-foreground uppercase text-xs">
               Rate (%)
             </th>
-            <th className="px-6 py-3 font-label-md text-label-md text-on-surface-variant uppercase text-xs">
+            <th className="px-6 py-3 font-label-md text-label-md text-muted-foreground uppercase text-xs">
               Type
             </th>
-            <th className="px-6 py-3 font-label-md text-label-md text-on-surface-variant uppercase text-xs">
+            <th className="px-6 py-3 font-label-md text-label-md text-muted-foreground uppercase text-xs">
               Account
             </th>
-            <th className="px-6 py-3 font-label-md text-label-md text-on-surface-variant uppercase text-xs">
+            <th className="px-6 py-3 font-label-md text-label-md text-muted-foreground uppercase text-xs">
               Status
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-outline-variant bg-surface-container-lowest">
+        <tbody className="divide-y divide-border bg-card-container-lowest">
           {taxRates.map((tr, index) => (
-            <tr key={index} className="hover:bg-surface-container-low transition-colors">
+            <tr key={index} className="hover:bg-card-container-low transition-colors">
               <td className="px-6 py-4">
                 <div className="flex flex-col">
-                  <span className="font-bold text-on-surface">{tr.name}</span>
-                  <span className="text-[11px] text-on-surface-variant">Tax configuration</span>
+                  <span className="font-bold text-foreground">{tr.name}</span>
+                  <span className="text-[11px] text-muted-foreground">Tax configuration</span>
                 </div>
               </td>
               <td className="px-6 py-4 font-mono-data text-mono-data font-bold">
                 {tr.rate.toFixed(2)}%
               </td>
-              <td className="px-6 py-4 text-on-surface-variant">{tr.type}</td>
-              <td className="px-6 py-4 text-on-surface-variant">{tr.account}</td>
+              <td className="px-6 py-4 text-muted-foreground">{tr.type}</td>
+              <td className="px-6 py-4 text-muted-foreground">{tr.account}</td>
               <td className="px-6 py-4">
                 <span
                   className={cn(

@@ -90,29 +90,29 @@ export default function TaxReports() {
       {/* Breadcrumb & Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <nav className="flex items-center gap-1 text-on-surface-variant mb-1">
+          <nav className="flex items-center gap-1 text-muted-foreground mb-1">
             <span className="text-body-sm">Settings</span>
             <span className="material-symbols-outlined text-sm">chevron_right</span>
             <span className="text-body-sm font-semibold text-primary">Tax Configuration</span>
           </nav>
-          <h2 className="font-headline-md text-headline-md text-on-surface">
+          <h2 className="font-headline-md text-headline-md text-foreground">
             GST &amp; Tax Compliance
           </h2>
-          <p className="text-body-md text-on-surface-variant">
+          <p className="text-body-md text-muted-foreground">
             Manage tax rates, HSN codes, and generate statutory reports.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => alert("Exporting Filing Data...")}
-            className="flex items-center gap-1.5 px-4 py-2 border border-outline-variant text-on-surface rounded-lg hover:bg-surface-container transition-colors text-xs font-semibold"
+            className="flex items-center gap-1.5 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-card-container transition-colors text-xs font-semibold"
           >
             <span className="material-symbols-outlined text-sm">download</span>
             Export Filing Data
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg shadow hover:opacity-90 active:scale-95 transition-all text-xs font-semibold"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg shadow hover:opacity-90 active:scale-95 transition-all text-xs font-semibold"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             Add New Tax Rate
@@ -127,8 +127,8 @@ export default function TaxReports() {
       </div>
 
       {/* Configuration Tabs */}
-      <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-        <div className="flex border-b border-outline-variant bg-surface-container-low overflow-x-auto no-scrollbar">
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+        <div className="flex border-b border-border bg-card-container-low overflow-x-auto no-scrollbar">
           {(["Tax Rates", "HSN/SAC Codes", "TDS Settings"] as const).map((tab) => (
             <button
               key={tab}
@@ -143,7 +143,7 @@ export default function TaxReports() {
                   (activeTab === "HSN/SAC" && tab === "HSN/SAC Codes") ||
                   (activeTab === "TDS" && tab === "TDS Settings")
                   ? "border-b-2 border-primary text-primary font-bold bg-white/50"
-                  : "text-on-surface-variant hover:bg-surface-container"
+                  : "text-muted-foreground hover:bg-card-container"
               )}
             >
               {tab}
@@ -166,7 +166,7 @@ export default function TaxReports() {
           <TdsSettingsTab tdsThresholds={tdsThresholds} />
         )}
 
-        <div className="p-4 bg-surface-container-lowest border-t border-outline-variant flex items-center justify-between text-xs text-on-surface-variant font-medium">
+        <div className="p-4 bg-card-container-lowest border-t border-border flex items-center justify-between text-xs text-muted-foreground font-medium">
           <span>Configured compliance rates apply globally for tax invoices.</span>
         </div>
       </div>

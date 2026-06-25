@@ -58,7 +58,7 @@ export default function Customers() {
         actions={
           <button
             onClick={() => router.push("/customers/new")}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
           >
             <span className="material-symbols-outlined text-[17px]">add</span>
             New Customer
@@ -69,7 +69,7 @@ export default function Customers() {
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Total Customers" value={String(customers.length + 1279)} icon="groups" trend={{ label: "+12% from last month", up: true }} />
-        <StatCard label="Total Receivables" value={`₹${totalReceivables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="account_balance_wallet" trend={{ label: "15 Overdue payments", up: null }} iconColor="text-error" />
+        <StatCard label="Total Receivables" value={`₹${totalReceivables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="account_balance_wallet" trend={{ label: "15 Overdue payments", up: null }} iconColor="text-destructive" />
         <StatCard label="Active Customers" value={String(activeCount + 847)} icon="autorenew" trend={{ label: "98% Retention rate", up: true }} />
       </div>
 
@@ -84,7 +84,7 @@ export default function Customers() {
             <FilterSelect value={selectedStatus} onChange={setSelectedStatus} options={["All", "Active", "Inactive"]} />
             <button
               onClick={toggleSort}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors text-xs font-semibold border border-outline-variant"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-muted-foreground hover:bg-card-container rounded-lg transition-colors text-xs font-semibold border border-border"
             >
               <span className="material-symbols-outlined text-[16px]">sort_by_alpha</span>
               {sortOrder === "none" ? "Sort" : sortOrder === "asc" ? "A→Z" : "Z→A"}
@@ -108,29 +108,29 @@ export default function Customers() {
                 <TableRow key={cust.id}>
                   <Td>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
                         {cust.avatarInitials}
                       </div>
                       <div>
-                        <p className="font-bold text-on-surface text-sm">{cust.name}</p>
-                        <p className="text-[11px] text-on-surface-variant">{cust.id}</p>
+                        <p className="font-bold text-foreground text-sm">{cust.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{cust.id}</p>
                       </div>
                     </div>
                   </Td>
                   <Td><StatusBadge status={cust.status} /></Td>
-                  <Td className={cn("text-right font-bold font-mono", cust.balance > 0 && "text-error")}>
+                  <Td className={cn("text-right font-bold font-mono", cust.balance > 0 && "text-destructive")}>
                     ₹{cust.balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </Td>
                   <Td>
-                    <p className="text-xs text-on-surface">{cust.email}</p>
-                    <p className="text-[11px] text-on-surface-variant">{cust.phone}</p>
+                    <p className="text-xs text-foreground">{cust.email}</p>
+                    <p className="text-[11px] text-muted-foreground">{cust.phone}</p>
                   </Td>
                   <Td>
                     <div className="flex items-center gap-1">
-                      <a href={`tel:${cust.phone}`} title="Call" className="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+                      <a href={`tel:${cust.phone}`} title="Call" className="p-1.5 rounded hover:bg-card-container text-muted-foreground hover:text-primary transition-colors">
                         <span className="material-symbols-outlined text-[17px]">call</span>
                       </a>
-                      <a href={`mailto:${cust.email}`} title="Email" className="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+                      <a href={`mailto:${cust.email}`} title="Email" className="p-1.5 rounded hover:bg-card-container text-muted-foreground hover:text-primary transition-colors">
                         <span className="material-symbols-outlined text-[17px]">mail</span>
                       </a>
                     </div>

@@ -27,18 +27,18 @@ export function HsnCodesTab({ hsnCodes, onAddHsnCode }: HsnCodesTabProps) {
         {hsnCodes.map((hc, idx) => (
           <div
             key={idx}
-            className="flex items-center justify-between p-4 border border-outline-variant rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors"
+            className="flex items-center justify-between p-4 border border-border rounded-lg bg-card-container-low hover:bg-card-container transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="bg-primary-container/10 p-2 rounded text-primary">
+              <div className="bg-primary/10/10 p-2 rounded text-primary">
                 <span className="material-symbols-outlined text-lg">inventory_2</span>
               </div>
               <div>
-                <p className="font-bold text-body-md text-on-surface">{hc.code}</p>
-                <p className="text-xs text-on-surface-variant">{hc.description}</p>
+                <p className="font-bold text-body-md text-foreground">{hc.code}</p>
+                <p className="text-xs text-muted-foreground">{hc.description}</p>
               </div>
             </div>
-            <span className="text-mono-data font-mono-data font-bold bg-white px-2.5 py-1 rounded border border-outline-variant">
+            <span className="text-mono-data font-mono-data font-bold bg-white px-2.5 py-1 rounded border border-border">
               {hc.gstRate}
             </span>
           </div>
@@ -46,7 +46,7 @@ export function HsnCodesTab({ hsnCodes, onAddHsnCode }: HsnCodesTabProps) {
       </div>
       <button
         onClick={handleLinkHsnCode}
-        className="w-full py-3 border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1 cursor-pointer"
+        className="w-full py-3 border-2 border-dashed border-border rounded-lg text-muted-foreground hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1 cursor-pointer"
       >
         <span className="material-symbols-outlined">add_circle</span>
         <span className="font-label-md text-xs font-semibold">Link New HSN Code</span>

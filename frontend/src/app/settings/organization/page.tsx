@@ -94,20 +94,20 @@ export default function OrganizationProfile() {
   return (
     <div className="p-8 max-w-[900px] mx-auto space-y-8 flex flex-col pb-24">
       {/* Header */}
-      <div className="flex items-center gap-4 border-b border-outline-variant pb-6">
-        <Link href="/settings" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+      <div className="flex items-center gap-4 border-b border-border pb-6">
+        <Link href="/settings" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-card-container transition-colors text-muted-foreground">
           <span className="material-symbols-outlined text-[24px]">arrow_back</span>
         </Link>
         <div>
-          <h1 className="font-headline-md text-headline-md text-on-surface font-bold">Organization Profile</h1>
-          <p className="text-body-md text-on-surface-variant mt-1">
+          <h1 className="font-headline-md text-headline-md text-foreground font-bold">Organization Profile</h1>
+          <p className="text-body-md text-muted-foreground mt-1">
             Manage your company identity, location, and regional settings.
           </p>
         </div>
       </div>
 
       {message && (
-        <div className={`p-4 rounded-xl flex items-center gap-3 \${message.type === 'success' ? 'bg-primary-container text-on-primary-container' : 'bg-error-container text-error'}`}>
+        <div className={`p-4 rounded-xl flex items-center gap-3 \${message.type === 'success' ? 'bg-primary/10 text-primary-foreground-container' : 'bg-destructive/15 text-destructive'}`}>
           <span className="material-symbols-outlined">
             {message.type === 'success' ? 'check_circle' : 'error'}
           </span>
@@ -121,7 +121,7 @@ export default function OrganizationProfile() {
         <SectionCard title="Organization Details" subtitle="Basic details of your organization">
           <div className="space-y-6">
             <div className="flex gap-6 items-start">
-              <div className="w-32 h-32 bg-surface-container border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center text-on-surface-variant relative overflow-hidden group cursor-pointer hover:bg-surface-container-high transition-colors">
+              <div className="w-32 h-32 bg-card-container border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center text-muted-foreground relative overflow-hidden group cursor-pointer hover:bg-card-container-high transition-colors">
                 {formData.logo_url ? (
                   <img src={formData.logo_url} alt="Logo" className="w-full h-full object-cover" />
                 ) : (
@@ -141,10 +141,10 @@ export default function OrganizationProfile() {
                 />
               </div>
               <div className="flex-1 space-y-2">
-                <p className="text-body-sm text-on-surface-variant">
+                <p className="text-body-sm text-muted-foreground">
                   This logo will be displayed in transaction PDFs and email notifications.
                 </p>
-                <p className="text-label-sm text-on-surface-variant font-mono">
+                <p className="text-label-sm text-muted-foreground font-mono">
                   Preferred Image Dimensions: 240 x 240 pixels @ 72 DPI<br/>
                   Maximum File Size: 1MB
                 </p>
@@ -155,7 +155,7 @@ export default function OrganizationProfile() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-outline-variant">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
               <FormField label="Organization Name *">
                 <input required type="text" name="organization_name" value={formData.organization_name} onChange={handleChange} className={inputCls} />
               </FormField>
@@ -224,9 +224,9 @@ export default function OrganizationProfile() {
                 name="different_payment_address" 
                 checked={formData.different_payment_address} 
                 onChange={handleChange}
-                className="w-5 h-5 text-primary rounded border-outline-variant focus:ring-primary"
+                className="w-5 h-5 text-primary rounded border-border focus:ring-primary"
               />
-              <label htmlFor="different_payment_address" className="text-body-md text-on-surface font-medium cursor-pointer">
+              <label htmlFor="different_payment_address" className="text-body-md text-foreground font-medium cursor-pointer">
                 Would you like to add a different address for payment stubs?
               </label>
             </div>
@@ -244,9 +244,9 @@ export default function OrganizationProfile() {
               <input type="email" name="primary_contact_email" value={formData.primary_contact_email || ''} onChange={handleChange} className={inputCls} placeholder="finance@demand-tech.com" />
             </FormField>
           </div>
-          <div className="mt-4 p-4 bg-surface-container-low rounded-lg border border-outline-variant flex items-start gap-3">
+          <div className="mt-4 p-4 bg-card-container-low rounded-lg border border-border flex items-start gap-3">
             <span className="material-symbols-outlined text-secondary text-[20px] mt-0.5">info</span>
-            <p className="text-body-sm text-on-surface-variant">
+            <p className="text-body-sm text-muted-foreground">
               Emails will be sent through the system's default sender service to prevent them from landing in Spam. Domain authentication is required to send directly from your domain.
             </p>
           </div>
@@ -305,18 +305,18 @@ export default function OrganizationProfile() {
         </SectionCard>
 
         {/* Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40">
           <div className="max-w-[900px] mx-auto flex justify-end gap-4">
             <Link 
               href="/settings"
-              className="px-6 py-2 border border-outline-variant rounded-full text-label-lg font-bold text-on-surface-variant hover:bg-surface-container transition-colors"
+              className="px-6 py-2 border border-border rounded-full text-label-lg font-bold text-muted-foreground hover:bg-card-container transition-colors"
             >
               Cancel
             </Link>
             <button 
               type="submit" 
               disabled={saving}
-              className="px-6 py-2 bg-primary text-on-primary rounded-full text-label-lg font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-2 bg-primary text-primary-foreground rounded-full text-label-lg font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
             >
               {saving ? (
                 <>

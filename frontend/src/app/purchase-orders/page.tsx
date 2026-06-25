@@ -60,7 +60,7 @@ export default function PurchaseOrders() {
         title="Purchase Orders"
         subtitle="Create and track purchase orders with vendors across all your operations."
         actions={
-          <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm">
+          <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm">
             <span className="material-symbols-outlined text-[17px]">add</span>
             New PO
           </button>
@@ -98,17 +98,17 @@ export default function PurchaseOrders() {
               {filtered.map((po) => (
                 <TableRow key={po.number}>
                   <Td className="font-mono font-bold text-primary">{po.number}</Td>
-                  <Td className="font-semibold text-on-surface">{po.vendor}</Td>
+                  <Td className="font-semibold text-foreground">{po.vendor}</Td>
                   <Td>
-                    <span className="flex items-center gap-1 text-on-surface-variant">
+                    <span className="flex items-center gap-1 text-muted-foreground">
                       <span className="material-symbols-outlined text-[15px]">inventory_2</span>
                       {po.items} items
                     </span>
                   </Td>
-                  <Td className="text-right font-bold font-mono text-on-surface">₹{po.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</Td>
-                  <Td className="text-on-surface-variant">{po.deliveryDate}</Td>
+                  <Td className="text-right font-bold font-mono text-foreground">₹{po.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</Td>
+                  <Td className="text-muted-foreground">{po.deliveryDate}</Td>
                   <Td><StatusBadge status={po.status} /></Td>
-                  <Td className="text-on-surface-variant text-xs">{po.createdDate}</Td>
+                  <Td className="text-muted-foreground text-xs">{po.createdDate}</Td>
                 </TableRow>
               ))}
               {filtered.length === 0 && <EmptyState icon="shopping_cart" message="No purchase orders found." colSpan={7} />}
@@ -138,9 +138,9 @@ export default function PurchaseOrders() {
               <FormField label="Total Value (₹)"><input type="number" step="0.01" required placeholder="0.00" className={inputCls} value={newTotal} onChange={(e) => setNewTotal(e.target.value)} /></FormField>
             </div>
             <FormField label="Expected Delivery Date"><input className={inputCls} placeholder="Nov 30, 2023" value={newDelivery} onChange={(e) => setNewDelivery(e.target.value)} /></FormField>
-            <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Create PO</button>
+            <div className="pt-4 border-t border-border flex justify-end gap-3">
+              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-card-container transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Create PO</button>
             </div>
           </form>
         </Modal>

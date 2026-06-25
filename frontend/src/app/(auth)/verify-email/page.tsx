@@ -68,7 +68,7 @@ function VerifyEmailContent() {
             <h2 className="text-xl font-bold text-white mb-2">Verified!</h2>
             <p className="text-sm text-slate-400">{message}</p>
           </div>
-          <Link href="/login" className="w-full mt-2 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary/95 transition-all flex items-center justify-center shadow-lg shadow-primary/20">
+          <Link href="/login" className="w-full mt-2 py-2.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/95 transition-all flex items-center justify-center shadow-lg shadow-primary/20">
             Continue to Login
           </Link>
         </>
@@ -94,7 +94,7 @@ export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(67,56,202,0.22),rgba(255,255,255,0))] px-4">
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-secondary-container/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
         <Suspense fallback={<div className="text-center text-slate-400">Loading...</div>}>

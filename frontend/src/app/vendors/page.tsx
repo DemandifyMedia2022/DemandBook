@@ -79,7 +79,7 @@ export default function Vendors() {
         actions={
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
           >
             <span className="material-symbols-outlined text-[17px]">add</span>
             New Vendor
@@ -91,7 +91,7 @@ export default function Vendors() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Total Vendors" value={String(vendors.length)} icon="storefront" trend={{ label: "Active relationships", up: true }} />
         <StatCard label="Total Payables" value={`₹${totalPayables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="payments" trend={{ label: "Across all vendors", up: null }} />
-        <StatCard label="Overdue Payables" value={`₹${overduePayables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="warning" iconColor="text-error" trend={{ label: "Needs immediate attention", up: false }} />
+        <StatCard label="Overdue Payables" value={`₹${overduePayables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="warning" iconColor="text-destructive" trend={{ label: "Needs immediate attention", up: false }} />
       </div>
 
       {/* Vendor Grid */}
@@ -109,10 +109,10 @@ export default function Vendors() {
           {filtered.map((vendor) => (
             <div
               key={vendor.id}
-              className="flex items-center justify-between p-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low hover:shadow-sm transition-all cursor-pointer"
+              className="flex items-center justify-between p-4 rounded-xl border border-border bg-card-container-lowest hover:bg-card-container-low hover:shadow-sm transition-all cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high flex items-center justify-center relative shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-card-container-high flex items-center justify-center relative shrink-0">
                   {vendor.imageUrl ? (
                     <Image src={vendor.imageUrl} alt={vendor.name} fill sizes="40px" className="object-cover" />
                   ) : (
@@ -122,8 +122,8 @@ export default function Vendors() {
                   )}
                 </div>
                 <div>
-                  <p className="font-bold text-sm text-on-surface">{vendor.name}</p>
-                  <p className="text-[11px] text-on-surface-variant">
+                  <p className="font-bold text-sm text-foreground">{vendor.name}</p>
+                  <p className="text-[11px] text-muted-foreground">
                     {vendor.contactPerson} &bull;{" "}
                     <span className={cn("font-semibold", typeColors[vendor.type].split(" ").find(c => c.startsWith("text-")))}>
                       {vendor.type}
@@ -132,7 +132,7 @@ export default function Vendors() {
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-bold text-sm text-on-surface font-mono">
+                <p className="font-bold text-sm text-foreground font-mono">
                   ₹{vendor.balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </p>
                 <StatusBadge status={vendor.status} />
@@ -140,7 +140,7 @@ export default function Vendors() {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="col-span-2 py-16 text-center text-on-surface-variant">
+            <div className="col-span-2 py-16 text-center text-muted-foreground">
               <span className="material-symbols-outlined text-[40px] block mb-2 opacity-30">storefront</span>
               <p className="text-sm font-semibold">No vendors match your filter.</p>
             </div>
@@ -183,9 +183,9 @@ export default function Vendors() {
                 </select>
               </FormField>
             </div>
-            <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Create Vendor</button>
+            <div className="pt-4 border-t border-border flex justify-end gap-3">
+              <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-card-container transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Create Vendor</button>
             </div>
           </form>
         </Modal>

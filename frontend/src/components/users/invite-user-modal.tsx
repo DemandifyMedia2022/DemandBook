@@ -41,9 +41,9 @@ export function InviteUserModal({ onClose, onInvite }: InviteUserModalProps) {
             <option value="Admin">Administrator</option>
           </select>
         </FormField>
-        <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
-          <button type="submit" className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Send Invite</button>
+        <div className="pt-4 border-t border-border flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-muted-foreground hover:bg-card-container transition-colors">Cancel</button>
+          <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">Send Invite</button>
         </div>
       </form>
     </Modal>

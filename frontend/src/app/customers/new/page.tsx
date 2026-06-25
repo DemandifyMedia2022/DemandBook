@@ -181,7 +181,7 @@ export default function NewCustomer() {
               type="button" 
               onClick={handleFetchGSTIN} 
               disabled={!gstin}
-              className="px-4 py-2 bg-surface-container border border-outline-variant rounded-lg text-sm font-semibold hover:bg-surface-container-high transition-colors disabled:opacity-50 whitespace-nowrap"
+              className="px-4 py-2 bg-card-container border border-border rounded-lg text-sm font-semibold hover:bg-card-container-high transition-colors disabled:opacity-50 whitespace-nowrap"
             >
               Auto-fill PAN & State
             </button>
@@ -189,7 +189,7 @@ export default function NewCustomer() {
               href="https://services.gst.gov.in/services/searchtp" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-4 py-2 bg-surface-container border border-outline-variant rounded-lg text-sm font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-2 whitespace-nowrap"
+              className="px-4 py-2 bg-card-container border border-border rounded-lg text-sm font-semibold hover:bg-card-container-high transition-colors flex items-center gap-2 whitespace-nowrap"
             >
               Verify on Portal <span className="material-symbols-outlined text-[16px]">open_in_new</span>
             </a>
@@ -200,7 +200,7 @@ export default function NewCustomer() {
         <SectionCard title="Basic Information">
           <div className="space-y-5">
             <div className="flex items-center gap-6">
-              <label className="text-sm font-semibold text-on-surface w-32 shrink-0">Customer Type</label>
+              <label className="text-sm font-semibold text-foreground w-32 shrink-0">Customer Type</label>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input type="radio" name="custType" checked={customerType === "Business"} onChange={() => setCustomerType("Business")} className="accent-primary" />
@@ -214,7 +214,7 @@ export default function NewCustomer() {
             </div>
 
             <div className="flex items-start gap-6">
-              <label className="text-sm font-semibold text-on-surface w-32 shrink-0 pt-2">Primary Contact</label>
+              <label className="text-sm font-semibold text-foreground w-32 shrink-0 pt-2">Primary Contact</label>
               <div className="flex gap-2 flex-1">
                 <select className={cn(selectCls, "w-24")} value={salutation} onChange={(e) => setSalutation(e.target.value)}>
                   <option value="">Salutation</option>
@@ -229,43 +229,43 @@ export default function NewCustomer() {
             </div>
 
             <div className="flex items-center gap-6">
-              <label className="text-sm font-semibold text-on-surface w-32 shrink-0">Company Name</label>
+              <label className="text-sm font-semibold text-foreground w-32 shrink-0">Company Name</label>
               <div className="flex-1">
                 <input className={inputCls} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
               </div>
             </div>
 
             <div className="flex items-center gap-6">
-              <label className="text-sm font-semibold text-error w-32 shrink-0">Display Name *</label>
+              <label className="text-sm font-semibold text-destructive w-32 shrink-0">Display Name *</label>
               <div className="flex-1">
                 <input required className={cn(inputCls, !displayName && "border-error")} value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Select or type to add" />
-                {!displayName && <p className="text-[11px] text-error mt-1">Error: Enter the Display Name of your customer.</p>}
+                {!displayName && <p className="text-[11px] text-destructive mt-1">Error: Enter the Display Name of your customer.</p>}
               </div>
             </div>
 
             <div className="flex items-center gap-6">
-              <label className="text-sm font-semibold text-on-surface w-32 shrink-0">Email Address</label>
+              <label className="text-sm font-semibold text-foreground w-32 shrink-0">Email Address</label>
               <div className="flex-1">
                 <input type="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
             </div>
 
             <div className="flex items-start gap-6">
-              <label className="text-sm font-semibold text-on-surface w-32 shrink-0 pt-2">Phone</label>
+              <label className="text-sm font-semibold text-foreground w-32 shrink-0 pt-2">Phone</label>
               <div className="flex gap-4 flex-1">
                 <div className="flex-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">phone</span>
+                  <span className="material-symbols-outlined text-[18px] text-muted-foreground">phone</span>
                   <input className={inputCls} placeholder="Work Phone" value={workPhone} onChange={(e) => setWorkPhone(e.target.value)} />
                 </div>
                 <div className="flex-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">smartphone</span>
+                  <span className="material-symbols-outlined text-[18px] text-muted-foreground">smartphone</span>
                   <input className={inputCls} placeholder="Mobile" value={mobilePhone} onChange={(e) => setMobilePhone(e.target.value)} />
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-6">
-              <label className="text-sm font-semibold text-on-surface w-32 shrink-0">Customer Language</label>
+              <label className="text-sm font-semibold text-foreground w-32 shrink-0">Customer Language</label>
               <div className="max-w-[200px] w-full">
                 <select className={selectCls} value={customerLanguage} onChange={(e) => setCustomerLanguage(e.target.value)}>
                   <option value="English">English</option>
@@ -280,7 +280,7 @@ export default function NewCustomer() {
 
         {/* Other Details Tabs */}
         <SectionCard title="Other Details" noPadding>
-          <div className="border-b border-outline-variant px-4 pt-4 flex gap-6 overflow-x-auto">
+          <div className="border-b border-border px-4 pt-4 flex gap-6 overflow-x-auto">
             {["Address", "Contact Persons", "Custom Fields", "Reporting Tags", "Remarks"].map((tab) => (
               <button
                 key={tab}
@@ -288,7 +288,7 @@ export default function NewCustomer() {
                 onClick={() => setActiveTab(tab)}
                 className={cn(
                   "pb-3 text-sm font-semibold transition-colors border-b-2 whitespace-nowrap",
-                  activeTab === tab ? "border-primary text-primary" : "border-transparent text-on-surface-variant hover:text-on-surface"
+                  activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
                 {tab}
@@ -369,7 +369,7 @@ export default function NewCustomer() {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 bg-surface-container rounded-lg border border-outline-variant text-sm text-on-surface-variant">
+                <div className="p-4 bg-card-container rounded-lg border border-border text-sm text-muted-foreground">
                   <strong>Note:</strong> Add and manage additional addresses from this Customers and Vendors details section.
                   You can customise how customers' addresses are displayed in transaction PDFs. To do this, go to Settings &gt; Preferences &gt; Customers and Vendors, and navigate to the Address Format sections.
                 </div>
@@ -379,7 +379,7 @@ export default function NewCustomer() {
               <textarea className={cn(inputCls, "h-32")} placeholder="Add notes about this customer..." />
             )}
             {["Contact Persons", "Custom Fields", "Reporting Tags"].includes(activeTab) && (
-              <div className="text-center py-10 text-on-surface-variant text-sm">
+              <div className="text-center py-10 text-muted-foreground text-sm">
                 This section can be configured later.
               </div>
             )}
@@ -407,7 +407,7 @@ export default function NewCustomer() {
                 <input className={inputCls} value={pan} onChange={(e) => setPan(e.target.value)} placeholder="ABCDE1234F" />
               </FormField>
               <div className="pt-2">
-                <label className="text-sm font-semibold text-on-surface block mb-2">Tax Preference</label>
+                <label className="text-sm font-semibold text-foreground block mb-2">Tax Preference</label>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 cursor-pointer text-sm">
                     <input type="radio" name="taxPref" checked={taxPreference === "Taxable"} onChange={() => setTaxPreference("Taxable")} className="accent-primary" />
@@ -432,14 +432,14 @@ export default function NewCustomer() {
                   <option value="GBP">GBP - British Pound</option>
                 </select>
               </FormField>
-              <div className="pt-2 pb-1 border-b border-outline-variant">
+              <div className="pt-2 pb-1 border-b border-border">
                 <h4 className="font-semibold text-sm mb-1">Accounts Receivable</h4>
               </div>
               <div className="flex items-center gap-4">
                 <FormField label="Opening Balance">
                   <input type="number" step="0.01" className={inputCls} value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} placeholder="0.00" />
                 </FormField>
-                <div className="mt-6 text-on-surface-variant font-medium">{currency}</div>
+                <div className="mt-6 text-muted-foreground font-medium">{currency}</div>
               </div>
               <FormField label="Payment Terms">
                 <select className={selectCls} value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)}>
@@ -459,18 +459,18 @@ export default function NewCustomer() {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-semibold text-sm">Enable Portal?</p>
-              <p className="text-xs text-on-surface-variant">Allow portal access for this customer</p>
+              <p className="text-xs text-muted-foreground">Allow portal access for this customer</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" checked={enablePortal} onChange={(e) => setEnablePortal(e.target.checked)} />
-              <div className="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+              <div className="w-11 h-6 bg-card-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
             </label>
           </div>
         </SectionCard>
 
         {/* Documents Section */}
         <SectionCard title="Documents">
-          <div className="border-2 border-dashed border-outline-variant rounded-xl p-8 text-center hover:bg-surface-container transition-colors cursor-pointer relative">
+          <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-card-container transition-colors cursor-pointer relative">
             <input
               type="file"
               multiple
@@ -479,18 +479,18 @@ export default function NewCustomer() {
             />
             <span className="material-symbols-outlined text-[32px] text-primary mb-2">upload_file</span>
             <p className="font-semibold text-sm">Click to upload files or drag and drop</p>
-            <p className="text-xs text-on-surface-variant mt-1">You can upload a maximum of 10 files, 10MB each</p>
+            <p className="text-xs text-muted-foreground mt-1">You can upload a maximum of 10 files, 10MB each</p>
           </div>
 
           {documents.length > 0 && (
             <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {documents.map((file, i) => (
-                <div key={i} className="flex items-center justify-between bg-surface-container p-2 rounded-lg border border-outline-variant">
+                <div key={i} className="flex items-center justify-between bg-card-container p-2 rounded-lg border border-border">
                   <div className="overflow-hidden">
                     <p className="text-[11px] font-semibold truncate" title={file.name}>{file.name}</p>
-                    <p className="text-[9px] text-on-surface-variant">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p className="text-[9px] text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
-                  <button type="button" onClick={() => handleRemoveFile(i)} className="text-error hover:bg-error/10 p-1 rounded transition-colors shrink-0">
+                  <button type="button" onClick={() => handleRemoveFile(i)} className="text-destructive hover:bg-destructive/10 p-1 rounded transition-colors shrink-0">
                     <span className="material-symbols-outlined text-[14px]">close</span>
                   </button>
                 </div>
@@ -503,7 +503,7 @@ export default function NewCustomer() {
         <SectionCard title="Additional Details">
           <div className="space-y-4">
             <h4 className="font-semibold text-sm">Customer Owner</h4>
-            <p className="text-xs text-on-surface-variant mb-2">Assign a user as the customer owner to provide access only to the data of this customer.</p>
+            <p className="text-xs text-muted-foreground mb-2">Assign a user as the customer owner to provide access only to the data of this customer.</p>
             <select className={cn(selectCls, "max-w-[300px]")}>
               <option value="">Select Owner</option>
               <option value="1">John Admin</option>
@@ -514,10 +514,10 @@ export default function NewCustomer() {
 
         {/* Submit Actions */}
         <div className="flex justify-end gap-4 pb-10">
-          <button type="button" onClick={() => router.push("/customers")} className="px-6 py-2.5 rounded-lg font-bold text-sm text-on-surface-variant border border-outline-variant hover:bg-surface-container transition-colors">
+          <button type="button" onClick={() => router.push("/customers")} className="px-6 py-2.5 rounded-lg font-bold text-sm text-muted-foreground border border-border hover:bg-card-container transition-colors">
             Cancel
           </button>
-          <button type="submit" className="px-6 py-2.5 rounded-lg font-bold text-sm bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm active:scale-95">
+          <button type="submit" className="px-6 py-2.5 rounded-lg font-bold text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm active:scale-95">
             Save Customer
           </button>
         </div>
