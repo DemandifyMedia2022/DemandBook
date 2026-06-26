@@ -34,7 +34,7 @@ export const list = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const { custom_id, merchant, category, date, amount, status } = req.body;
+  const { custom_id, merchant, category, date, amount, status, other_details } = req.body;
 
   if (!custom_id || !merchant || !category || !amount) {
     return res.status(400).json({ success: false, message: 'ID, Merchant, Category, and Amount are required.' });
@@ -42,8 +42,8 @@ export const create = async (req: Request, res: Response) => {
 
   try {
     const insertQuery = `
-      INSERT INTO payments (custom_id, merchant, category, date, amount, status)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO payments (custom_id, merchant, category, date, amount, status, other_details)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *;
     `;
     const params = [
@@ -52,7 +52,8 @@ export const create = async (req: Request, res: Response) => {
       category,
       date || 'Today',
       parseFloat(amount),
-      status || 'Draft'
+      status || 'Draft',
+      other_details ? JSON.stringify(other_details) : null
     ];
 
     const result = await query(insertQuery, params);
