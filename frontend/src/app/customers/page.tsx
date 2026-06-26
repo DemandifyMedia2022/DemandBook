@@ -346,7 +346,10 @@ export default function Customers() {
             </p>
           </div>
 
-          <button className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors shadow-sm">
+          <button
+            onClick={() => router.push("/customers/new")}
+            className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors shadow-sm"
+          >
             <Plus className="w-4 h-4" />
             New Customer
           </button>

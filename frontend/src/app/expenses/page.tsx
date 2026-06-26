@@ -1,21 +1,312 @@
+// "use client";
+
+// import { useState, useEffect } from "react";
+// import { useRouter } from "next/navigation";
+// import { cn } from "@/lib/utils";
+// import {
+//   PageHeader, StatCard, SectionCard, StatusBadge,
+//   SearchBar, FilterSelect, Th, Td, TableRow, EmptyState, FAB
+// } from "@/components/ui/page-shell";
+// import { 
+//   Plane, 
+//   UtensilsCrossed, 
+//   Package, 
+//   Monitor, 
+//   Truck, 
+//   Tag, 
+//   Pencil, 
+//   Trash2 
+// } from "lucide-react";
+
+// // ---------------------------------------------------------------------------
+// // Types
+// // ---------------------------------------------------------------------------
+// interface Expense {
+//   id: string;
+//   merchant: string;
+//   category: "Travel" | "Meals" | "Supplies" | "Software" | "Shipping" | "Other";
+//   date: string;
+//   amount: number;
+//   status: "Synced" | "Draft" | "Review";
+// }
+
+// // ---------------------------------------------------------------------------
+// // Config
+// // ---------------------------------------------------------------------------
+// const CATEGORY_CONFIG: Record<
+//   Expense["category"],
+//   { icon: React.ReactNode; bg: string; text: string }
+// > = {
+//   Travel: { icon: <Plane className="w-3.5 h-3.5" />, bg: "bg-blue-50", text: "text-blue-700" },
+//   Meals: { icon: <UtensilsCrossed className="w-3.5 h-3.5" />, bg: "bg-orange-50", text: "text-orange-700" },
+//   Supplies: { icon: <Package className="w-3.5 h-3.5" />, bg: "bg-amber-50", text: "text-amber-700" },
+//   Software: { icon: <Monitor className="w-3.5 h-3.5" />, bg: "bg-violet-50", text: "text-violet-700" },
+//   Shipping: { icon: <Truck className="w-3.5 h-3.5" />, bg: "bg-cyan-50", text: "text-cyan-700" },
+//   Other: { icon: <Tag className="w-3.5 h-3.5" />, bg: "bg-zinc-100", text: "text-zinc-600" },
+// };
+
+// const STATUS_CONFIG: Record<
+//   Expense["status"],
+//   { dot: string; text: string; bg: string }
+// > = {
+//   Synced: { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
+//   Draft: { dot: "bg-zinc-400", text: "text-zinc-600", bg: "bg-zinc-100" },
+//   Review: { dot: "bg-amber-400", text: "text-amber-700", bg: "bg-amber-50" },
+// };
+
+// // ---------------------------------------------------------------------------
+// // Mock data
+// // ---------------------------------------------------------------------------
+// const initialExpenses: Expense[] = [
+//   { id: "EXP-001", merchant: "Delta Airlines", category: "Travel", date: "Sep 24, 2024", amount: 1240.00, status: "Synced" },
+//   { id: "EXP-002", merchant: "AWS Cloud Services", category: "Software", date: "Sep 22, 2024", amount: 342.15, status: "Draft" },
+//   { id: "EXP-003", merchant: "Starbucks Reserve", category: "Meals", date: "Sep 21, 2024", amount: 18.40, status: "Synced" },
+//   { id: "EXP-004", merchant: "Office Depot", category: "Supplies", date: "Sep 20, 2024", amount: 125.00, status: "Review" },
+//   { id: "EXP-005", merchant: "Uber Business", category: "Travel", date: "Sep 19, 2024", amount: 45.80, status: "Synced" },
+//   { id: "EXP-006", merchant: "Figma", category: "Software", date: "Sep 18, 2024", amount: 15.00, status: "Synced" },
+//   { id: "EXP-007", merchant: "Blue Dart Courier", category: "Shipping", date: "Sep 17, 2024", amount: 210.00, status: "Draft" },
+// ];
+
+// function CategoryBadge({ category }: { category: Expense["category"] }) {
+//   const cfg = CATEGORY_CONFIG[category];
+//   return (
+//     <span className={cn("inline-flex items-center gap-1.5 text-[12px] font-medium px-2 py-1 rounded-full", cfg.bg, cfg.text)}>
+//       {cfg.icon}
+//       {category}
+//     </span>
+//   );
+// }
+
+// function StatusPill({ status }: { status: Expense["status"] }) {
+//   const cfg = STATUS_CONFIG[status];
+//   return (
+//     <span className={cn("inline-flex items-center gap-1.5 text-[12px] font-medium px-2 py-1 rounded-full", cfg.bg, cfg.text)}>
+//       <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
+//       {status}
+//     </span>
+//   );
+// }
+
+// function fmt(n: number) {
+//   return "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+// }
+
+// // ---------------------------------------------------------------------------
+// // Page
+// // ---------------------------------------------------------------------------
+// export default function Expenses() {
+//   const router = useRouter();
+//   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+//   const [searchQuery, setSearchQuery] = useState("");
+//   const [selectedCategory, setSelectedCategory] = useState("All");
+//   const [selectedStatus, setSelectedStatus] = useState("All");
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     async function fetchExpenses() {
+//       try {
+//         const token = localStorage.getItem("token");
+//         if (!token) {
+//           setLoading(false);
+//           return;
+//         }
+
+//         const response = await fetch("http://localhost:8888/api/payment/list", {
+//           headers: {
+//             "Authorization": `Bearer ${token}`
+//           }
+//         });
+//         const res = await response.json();
+//         if (res.success && res.expenses) {
+//           if (res.expenses.length > 0) {
+//             const mapped: Expense[] = res.expenses.map((e: any) => ({
+//               id: e.custom_id,
+//               merchant: e.merchant,
+//               category: (["Travel", "Meals", "Supplies", "Software", "Shipping", "Other"].includes(e.category) ? e.category : "Other") as Expense["category"],
+//               date: e.date,
+//               amount: parseFloat(e.amount) || 0,
+//               status: e.status || "Synced"
+//             }));
+//             setExpenses(mapped);
+//           }
+//         }
+//       } catch (err) {
+//         console.error("Failed to fetch expenses from API:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     }
+//     fetchExpenses();
+//   }, []);
+
+//   const filtered = expenses.filter((e) => {
+//     const q = searchQuery.toLowerCase();
+//     return (
+//       (e.merchant.toLowerCase().includes(q) || e.id.toLowerCase().includes(q)) &&
+//       (selectedCategory === "All" || e.category === selectedCategory) &&
+//       (selectedStatus === "All" || e.status === selectedStatus)
+//     );
+//   });
+
+//   const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
+//   const draftTotal = expenses.filter((e) => e.status === "Draft").reduce((s, e) => s + e.amount, 0);
+//   const travelTotal = expenses.filter((e) => e.category === "Travel").reduce((s, e) => s + e.amount, 0);
+
+//   const handleDelete = (id: string) => setExpenses(expenses.filter((e) => e.id !== id));
+
+//   return (
+//     <div className="p-6 max-w-[1440px] mx-auto space-y-6">
+//       {/* Page Header */}
+//       <PageHeader
+//         title="Expenses"
+//         subtitle="Record and categorize all business expenses for tax and reporting."
+//         actions={
+//           <button
+//             onClick={() => router.push("/expenses/new")}
+//             className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+//           >
+//             <span className="material-symbols-outlined text-[17px]">add</span>
+//             Record Expense
+//           </button>
+//         }
+//       />
+
+//       {/* KPI Stats */}
+//       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+//         <StatCard label="Total Spend (Month)" value={`₹${totalSpend.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="payments" trend={{ label: "Combined recorded spend", up: null }} />
+//         <StatCard label="Pending Sync" value={`₹${draftTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="sync" trend={{ label: `${expenses.filter(e => e.status === "Draft").length} drafts awaiting sync`, up: null }} />
+//         <StatCard label="Travel Expenses" value={`₹${travelTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="flight" trend={{ label: "Category total", up: null }} />
+//       </div>
+
+//       {/* Table Section */}
+//       <SectionCard
+//         title="Expense Log"
+//         subtitle={loading ? "Loading entries..." : `${filtered.length} entries`}
+//         noPadding
+//         actions={
+//           <div className="flex items-center gap-2">
+//             <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search expenses..." />
+//             <FilterSelect value={selectedCategory} onChange={setSelectedCategory} options={["All", "Travel", "Meals", "Supplies", "Software", "Shipping", "Other"]} />
+//             <FilterSelect value={selectedStatus} onChange={setSelectedStatus} options={["All", "Synced", "Draft", "Review"]} />
+//           </div>
+//         }
+//       >
+//         <div className="overflow-x-auto">
+//           <table className="w-full text-left">
+//             <thead>
+//               <tr>
+//                 <Th>Merchant / Mileage</Th>
+//                 <Th>Category</Th>
+//                 <Th>Date</Th>
+//                 <Th right>Amount</Th>
+//                 <Th>Status</Th>
+//                 <Th>Actions</Th>
+//               </tr>
+//             </thead>
+//             <tbody className="divide-y divide-zinc-100">
+//               {filtered.map((exp) => {
+//                 const catCfg = CATEGORY_CONFIG[exp.category];
+//                 return (
+//                   <tr key={exp.id} className="hover:bg-zinc-50/70 transition-colors cursor-pointer group">
+//                     {/* Merchant */}
+//                     <td className="px-5 py-3">
+//                       <div className="flex items-center gap-3">
+//                         <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", catCfg.bg, catCfg.text)}>
+//                           {catCfg.icon}
+//                         </div>
+//                         <div>
+//                           <p className="text-[13px] font-bold text-zinc-900">{exp.merchant}</p>
+//                           <p className="text-[11px] text-zinc-500">{exp.id}</p>
+//                         </div>
+//                       </div>
+//                     </td>
+
+//                     {/* Category */}
+//                     <td className="px-5 py-3">
+//                       <CategoryBadge category={exp.category} />
+//                     </td>
+
+//                     {/* Date */}
+//                     <td className="px-5 py-3 text-[13px] text-zinc-500">{exp.date}</td>
+
+//                     {/* Amount */}
+//                     <td className="px-5 py-3 text-right font-mono text-[13px] font-bold text-zinc-900 tabular-nums">
+//                       {fmt(exp.amount)}
+//                     </td>
+
+//                     {/* Status */}
+//                     <td className="px-5 py-3">
+//                       <StatusPill status={exp.status} />
+//                     </td>
+
+//                     {/* Actions */}
+//                     <td className="px-5 py-3">
+//                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+//                         <button className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors">
+//                           <Pencil className="w-3.5 h-3.5" />
+//                         </button>
+//                         <button
+//                           onClick={(e) => { e.stopPropagation(); handleDelete(exp.id); }}
+//                           className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors"
+//                         >
+//                           <Trash2 className="w-3.5 h-3.5" />
+//                         </button>
+//                       </div>
+//                     </td>
+//                   </tr>
+//                 );
+//               })}
+
+//               {filtered.length === 0 && (
+//                 <tr>
+//                   <td colSpan={6} className="px-5 py-12 text-center">
+//                     <p className="text-[13px] text-zinc-400">No expenses match your filters.</p>
+//                   </td>
+//                 </tr>
+//               )}
+//             </tbody>
+//           </table>
+
+//           {/* Footer summary */}
+//           {filtered.length > 0 && (
+//             <div className="px-5 py-3 border-t border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
+//               <span className="text-[12px] text-zinc-400">
+//                 {filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}
+//               </span>
+//               <span className="text-[13px] font-semibold text-zinc-900 tabular-nums font-mono">
+//                 Total: {fmt(filtered.reduce((s, e) => s + e.amount, 0))}
+//               </span>
+//             </div>
+//           )}
+//         </div>
+//       </SectionCard>
+
+//       <FAB label="Record Expense" onClick={() => router.push("/expenses/new")} />
+//     </div>
+//   );
+// }
+
+
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  PageHeader, StatCard, SectionCard, StatusBadge,
-  SearchBar, FilterSelect, Th, Td, TableRow, EmptyState, FAB
-} from "@/components/ui/page-shell";
-import { 
-  Plane, 
-  UtensilsCrossed, 
-  Package, 
-  Monitor, 
-  Truck, 
-  Tag, 
-  Pencil, 
-  Trash2 
+  Plane,
+  UtensilsCrossed,
+  Package,
+  Monitor,
+  Truck,
+  Tag,
+  Search,
+  Plus,
+  Pencil,
+  Trash2,
+  ChevronDown,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -58,15 +349,18 @@ const STATUS_CONFIG: Record<
 // Mock data
 // ---------------------------------------------------------------------------
 const initialExpenses: Expense[] = [
-  { id: "EXP-001", merchant: "Delta Airlines", category: "Travel", date: "Sep 24, 2024", amount: 1240.00, status: "Synced" },
+  { id: "EXP-001", merchant: "Delta Airlines", category: "Travel", date: "Sep 24, 2024", amount: 1240.0, status: "Synced" },
   { id: "EXP-002", merchant: "AWS Cloud Services", category: "Software", date: "Sep 22, 2024", amount: 342.15, status: "Draft" },
-  { id: "EXP-003", merchant: "Starbucks Reserve", category: "Meals", date: "Sep 21, 2024", amount: 18.40, status: "Synced" },
-  { id: "EXP-004", merchant: "Office Depot", category: "Supplies", date: "Sep 20, 2024", amount: 125.00, status: "Review" },
-  { id: "EXP-005", merchant: "Uber Business", category: "Travel", date: "Sep 19, 2024", amount: 45.80, status: "Synced" },
-  { id: "EXP-006", merchant: "Figma", category: "Software", date: "Sep 18, 2024", amount: 15.00, status: "Synced" },
-  { id: "EXP-007", merchant: "Blue Dart Courier", category: "Shipping", date: "Sep 17, 2024", amount: 210.00, status: "Draft" },
+  { id: "EXP-003", merchant: "Starbucks Reserve", category: "Meals", date: "Sep 21, 2024", amount: 18.4, status: "Synced" },
+  { id: "EXP-004", merchant: "Office Depot", category: "Supplies", date: "Sep 20, 2024", amount: 125.0, status: "Review" },
+  { id: "EXP-005", merchant: "Uber Business", category: "Travel", date: "Sep 19, 2024", amount: 45.8, status: "Synced" },
+  { id: "EXP-006", merchant: "Figma", category: "Software", date: "Sep 18, 2024", amount: 15.0, status: "Synced" },
+  { id: "EXP-007", merchant: "Blue Dart Courier", category: "Shipping", date: "Sep 17, 2024", amount: 210.0, status: "Draft" },
 ];
 
+// ---------------------------------------------------------------------------
+// Components
+// ---------------------------------------------------------------------------
 function CategoryBadge({ category }: { category: Expense["category"] }) {
   const cfg = CATEGORY_CONFIG[category];
   return (
@@ -84,6 +378,44 @@ function StatusPill({ status }: { status: Expense["status"] }) {
       <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
       {status}
     </span>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  delta,
+}: {
+  label: string;
+  value: string;
+  delta?: number;
+}) {
+  const positive = delta !== undefined && delta >= 0;
+
+  return (
+    <div className="bg-white border border-zinc-200/80 rounded-xl p-5 flex flex-col gap-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all duration-200">
+      <div className="flex items-center justify-between">
+        <span className="text-[13px] font-medium text-zinc-500">{label}</span>
+        {delta !== undefined && (
+          <span
+            className={cn(
+              "inline-flex items-center gap-0.5 text-[12px] font-medium px-1.5 py-0.5 rounded-full",
+              positive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+            )}
+          >
+            {positive ? (
+              <ArrowUpRight className="w-3 h-3" />
+            ) : (
+              <ArrowDownRight className="w-3 h-3" />
+            )}
+            {Math.abs(delta)}%
+          </span>
+        )}
+      </div>
+      <span className="text-[26px] font-semibold text-zinc-900 tabular-nums tracking-tight">
+        {value}
+      </span>
+    </div>
   );
 }
 
@@ -113,8 +445,8 @@ export default function Expenses() {
 
         const response = await fetch("http://localhost:8888/api/payment/list", {
           headers: {
-            "Authorization": `Bearer ${token}`
-          }
+            "Authorization": `Bearer ${token}`,
+          },
         });
         const res = await response.json();
         if (res.success && res.expenses) {
@@ -125,7 +457,7 @@ export default function Expenses() {
               category: (["Travel", "Meals", "Supplies", "Software", "Shipping", "Other"].includes(e.category) ? e.category : "Other") as Expense["category"],
               date: e.date,
               amount: parseFloat(e.amount) || 0,
-              status: e.status || "Synced"
+              status: e.status || "Synced",
             }));
             setExpenses(mapped);
           }
@@ -150,103 +482,190 @@ export default function Expenses() {
 
   const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
   const draftTotal = expenses.filter((e) => e.status === "Draft").reduce((s, e) => s + e.amount, 0);
-  const travelTotal = expenses.filter((e) => e.category === "Travel").reduce((s, e) => s + e.amount, 0);
+  const syncedTotal = expenses.filter((e) => e.status === "Synced").reduce((s, e) => s + e.amount, 0);
 
   const handleDelete = (id: string) => setExpenses(expenses.filter((e) => e.id !== id));
 
   return (
-    <div className="p-6 max-w-[1440px] mx-auto space-y-6">
-      {/* Page Header */}
-      <PageHeader
-        title="Expenses"
-        subtitle="Record and categorize all business expenses for tax and reporting."
-        actions={
+    <div className="bg-[#FAFAFA] min-h-screen font-sans antialiased">
+      <div className="max-w-[1280px] mx-auto px-8 py-8 space-y-6">
+        {/* Page header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[22px] font-semibold text-zinc-900 tracking-tight">
+              Expenses
+            </h1>
+            <p className="text-[13px] text-zinc-500 mt-0.5">
+              Record and categorize all business expenses
+            </p>
+          </div>
+
           <button
             onClick={() => router.push("/expenses/new")}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+            className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors shadow-sm"
           >
-            <span className="material-symbols-outlined text-[17px]">add</span>
+            <Plus className="w-4 h-4" />
             Record Expense
           </button>
-        }
-      />
+        </div>
 
-      {/* KPI Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Total Spend (Month)" value={`₹${totalSpend.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="payments" trend={{ label: "Combined recorded spend", up: null }} />
-        <StatCard label="Pending Sync" value={`₹${draftTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="sync" trend={{ label: `${expenses.filter(e => e.status === "Draft").length} drafts awaiting sync`, up: null }} />
-        <StatCard label="Travel Expenses" value={`₹${travelTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`} icon="flight" trend={{ label: "Category total", up: null }} />
-      </div>
+        {/* Stats row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard
+            label="Total Spend"
+            value={fmt(totalSpend)}
+            delta={8.5}
+          />
+          <StatCard
+            label="Synced Expenses"
+            value={fmt(syncedTotal)}
+            delta={5.2}
+          />
+          <StatCard
+            label="Pending Sync"
+            value={fmt(draftTotal)}
+            delta={-2.1}
+          />
+        </div>
 
-      {/* Table Section */}
-      <SectionCard
-        title="Expense Log"
-        subtitle={loading ? "Loading entries..." : `${filtered.length} entries`}
-        noPadding
-        actions={
-          <div className="flex items-center gap-2">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search expenses..." />
-            <FilterSelect value={selectedCategory} onChange={setSelectedCategory} options={["All", "Travel", "Meals", "Supplies", "Software", "Shipping", "Other"]} />
-            <FilterSelect value={selectedStatus} onChange={setSelectedStatus} options={["All", "Synced", "Draft", "Review"]} />
+        {/* Table section */}
+        <div className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-[14px] font-semibold text-zinc-900">
+                Expense Log
+              </h2>
+              <p className="text-[12px] text-zinc-500">
+                {loading ? "Loading..." : `${filtered.length} entr${filtered.length !== 1 ? "ies" : "y"}`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Search */}
+              <div className="relative w-56">
+                <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search expenses..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors"
+                />
+              </div>
+
+              {/* Category filter */}
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="appearance-none pl-3 pr-8 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors cursor-pointer"
+                >
+                  <option value="All">All Categories</option>
+                  <option value="Travel">Travel</option>
+                  <option value="Meals">Meals</option>
+                  <option value="Supplies">Supplies</option>
+                  <option value="Software">Software</option>
+                  <option value="Shipping">Shipping</option>
+                  <option value="Other">Other</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Status filter */}
+              <div className="relative">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="appearance-none pl-3 pr-8 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors cursor-pointer"
+                >
+                  <option value="All">All Status</option>
+                  <option value="Synced">Synced</option>
+                  <option value="Draft">Draft</option>
+                  <option value="Review">Review</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
           </div>
-        }
-      >
-        <div className="overflow-x-auto">
+
+          {/* Table */}
           <table className="w-full text-left">
             <thead>
-              <tr>
-                <Th>Merchant / Mileage</Th>
-                <Th>Category</Th>
-                <Th>Date</Th>
-                <Th right>Amount</Th>
-                <Th>Status</Th>
-                <Th>Actions</Th>
+              <tr className="border-b border-zinc-100">
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
+                  Merchant
+                </th>
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
+                  Category
+                </th>
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
+                  Date
+                </th>
+                <th className="px-6 py-2.5 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
+                  Amount
+                </th>
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
+                  Status
+                </th>
+                <th className="px-6 py-2.5 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {filtered.map((exp) => {
-                const catCfg = CATEGORY_CONFIG[exp.category];
+              {filtered.map((expense) => {
+                const catCfg = CATEGORY_CONFIG[expense.category];
                 return (
-                  <tr key={exp.id} className="hover:bg-zinc-50/70 transition-colors cursor-pointer group">
+                  <tr
+                    key={expense.id}
+                    className="hover:bg-zinc-50/70 transition-colors cursor-pointer group"
+                  >
                     {/* Merchant */}
-                    <td className="px-5 py-3">
+                    <td className="px-6 py-3">
                       <div className="flex items-center gap-3">
                         <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", catCfg.bg, catCfg.text)}>
                           {catCfg.icon}
                         </div>
                         <div>
-                          <p className="text-[13px] font-bold text-zinc-900">{exp.merchant}</p>
-                          <p className="text-[11px] text-zinc-500">{exp.id}</p>
+                          <p className="text-[13px] font-medium text-zinc-900">
+                            {expense.merchant}
+                          </p>
+                          <p className="text-[12px] text-zinc-500">{expense.id}</p>
                         </div>
                       </div>
                     </td>
 
                     {/* Category */}
-                    <td className="px-5 py-3">
-                      <CategoryBadge category={exp.category} />
+                    <td className="px-6 py-3">
+                      <CategoryBadge category={expense.category} />
                     </td>
 
                     {/* Date */}
-                    <td className="px-5 py-3 text-[13px] text-zinc-500">{exp.date}</td>
+                    <td className="px-6 py-3 text-[13px] text-zinc-500">
+                      {expense.date}
+                    </td>
 
                     {/* Amount */}
-                    <td className="px-5 py-3 text-right font-mono text-[13px] font-bold text-zinc-900 tabular-nums">
-                      {fmt(exp.amount)}
+                    <td className="px-6 py-3 font-mono text-[13px] font-medium text-zinc-900 tabular-nums text-right">
+                      {fmt(expense.amount)}
                     </td>
 
                     {/* Status */}
-                    <td className="px-5 py-3">
-                      <StatusPill status={exp.status} />
+                    <td className="px-6 py-3">
+                      <StatusPill status={expense.status} />
                     </td>
 
                     {/* Actions */}
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="px-6 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(exp.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(expense.id);
+                          }}
                           className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -259,8 +678,10 @@ export default function Expenses() {
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center">
-                    <p className="text-[13px] text-zinc-400">No expenses match your filters.</p>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <p className="text-[13px] text-zinc-400">
+                      No expenses match your filters.
+                    </p>
                   </td>
                 </tr>
               )}
@@ -269,7 +690,7 @@ export default function Expenses() {
 
           {/* Footer summary */}
           {filtered.length > 0 && (
-            <div className="px-5 py-3 border-t border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
+            <div className="px-6 py-3 border-t border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
               <span className="text-[12px] text-zinc-400">
                 {filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}
               </span>
@@ -279,9 +700,7 @@ export default function Expenses() {
             </div>
           )}
         </div>
-      </SectionCard>
-
-      <FAB label="Record Expense" onClick={() => router.push("/expenses/new")} />
+      </div>
     </div>
   );
 }
