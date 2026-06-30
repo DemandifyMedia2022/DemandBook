@@ -17,7 +17,7 @@ export const list = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const { client_id, amount, frequency, next_date, is_active } = req.body;
+  const { client_id, amount, frequency, next_date, is_active, other_details } = req.body;
 
   if (!client_id || !amount || !frequency || !next_date) {
     return res.status(400).json({ success: false, message: 'Vendor ID (client_id), Amount, Frequency, and Next Date are required.' });
@@ -25,15 +25,16 @@ export const create = async (req: Request, res: Response) => {
 
   try {
     const result = await query(`
-      INSERT INTO recurring_bills (client_id, amount, frequency, next_date, is_active)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO recurring_bills (client_id, amount, frequency, next_date, is_active, other_details)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `, [
       client_id,
       amount,
       frequency,
       next_date,
-      is_active !== undefined ? is_active : true
+      is_active !== undefined ? is_active : true,
+      other_details ? JSON.stringify(other_details) : null
     ]);
     return res.status(201).json({ success: true, recurringBill: result.rows[0] });
   } catch (error) {
@@ -44,13 +45,13 @@ export const create = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { client_id, amount, frequency, next_date, is_active } = req.body;
+  const { client_id, amount, frequency, next_date, is_active, other_details } = req.body;
 
   try {
     const result = await query(`
       UPDATE recurring_bills
-      SET client_id = $1, amount = $2, frequency = $3, next_date = $4, is_active = $5, updated_at = NOW()
-      WHERE id = $6
+      SET client_id = $1, amount = $2, frequency = $3, next_date = $4, is_active = $5, other_details = $6, updated_at = NOW()
+      WHERE id = $7
       RETURNING *;
     `, [
       client_id,
@@ -58,6 +59,7 @@ export const update = async (req: Request, res: Response) => {
       frequency,
       next_date,
       is_active !== undefined ? is_active : true,
+      other_details ? JSON.stringify(other_details) : null,
       id
     ]);
 

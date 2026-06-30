@@ -86,6 +86,7 @@ app.use('/api/client', clientRoutes);
 app.use('/api/invoice', invoiceRoutes);
 app.use('/api/invoices', invoiceRoutes); // Support plural
 app.use('/api/bill', billRoutes);
+app.use('/api/bills', billRoutes); // Support plural
 app.use('/api/payment', paymentRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/admin', adminRoutes);

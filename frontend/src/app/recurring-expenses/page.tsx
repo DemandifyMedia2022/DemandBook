@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
     Search,
@@ -303,11 +304,63 @@ function CreateExpenseModal({
 // Page
 // ---------------------------------------------------------------------------
 export default function RecurringExpenses() {
+    const router = useRouter();
     const [expenses, setExpenses] = useState<RecurringExpense[]>(initialExpenses);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [selectedStatus, setSelectedStatus] = useState("All");
-    const [showModal, setShowModal] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchExpenses() {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    setLoading(false);
+                    return;
+                }
+
+                const response = await fetch("http://localhost:8888/api/recurring-expenses", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                const res = await response.json();
+                if (res.success && res.recurringExpenses) {
+                    // If backend table is empty, we can still fall back to mock data or empty array
+                    if (res.recurringExpenses.length > 0) {
+                        const mapped: RecurringExpense[] = res.recurringExpenses.map((e: any) => {
+                            const details = e.other_details || {};
+                            return {
+                                id: `RE-${String(e.id).padStart(3, '0')}`,
+                                dbId: e.id,
+                                name: e.merchant || "Unnamed Profile",
+                                vendor: details.vendor_name || details.vendor || "—",
+                                category: e.category || "Other",
+                                amount: parseFloat(e.amount) || 0,
+                                frequency: e.frequency || "Monthly",
+                                nextDueDate: e.next_date,
+                                nextDueDateLabel: new Date(e.next_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
+                                startDate: details.start_date || "—",
+                                endDate: details.ends_on || undefined,
+                                paymentMethod: details.paid_through || "—",
+                                status: e.is_active ? "Active" : (details.never_expires ? "Paused" : "Ended"),
+                            };
+                        });
+                        setExpenses(mapped);
+                    } else {
+                        // DB is empty, start fresh empty
+                        setExpenses([]);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch recurring expenses from API:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchExpenses();
+    }, []);
 
     const filtered = expenses.filter((e) => {
         const q = searchQuery.toLowerCase();
@@ -326,17 +379,50 @@ export default function RecurringExpenses() {
         return diff >= 0 && diff <= 7;
     }).length;
 
-    const toggleStatus = (id: string) => {
-        setExpenses(expenses.map((e) =>
-            e.id === id
-                ? { ...e, status: e.status === "Active" ? "Paused" : e.status === "Paused" ? "Active" : e.status }
-                : e
-        ));
-    };
+    const toggleStatus = async (id: string) => {
+        const item = expenses.find(e => e.id === id);
+        if (!item) return;
+        const newStatus = item.status === "Active" ? "Paused" : "Active";
+        const isActive = newStatus === "Active";
 
-    const handleAdd = (expense: RecurringExpense) => {
-        setExpenses([expense, ...expenses]);
-        setShowModal(false);
+        try {
+            const token = localStorage.getItem("token");
+            const dbId = (item as any).dbId;
+            if (!dbId) return;
+
+            const response = await fetch(`http://localhost:8888/api/recurring-expenses/${dbId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    merchant: item.name,
+                    category: item.category,
+                    amount: item.amount,
+                    frequency: item.frequency,
+                    next_date: item.nextDueDate,
+                    is_active: isActive,
+                    other_details: {
+                        vendor_name: item.vendor,
+                        start_date: item.startDate,
+                        ends_on: item.endDate,
+                        paid_through: item.paymentMethod
+                    }
+                })
+            });
+            const res = await response.json();
+            if (res.success) {
+                setExpenses(expenses.map((e) =>
+                    e.id === id ? { ...e, status: newStatus } : e
+                ));
+            } else {
+                alert(res.message || "Failed to update status");
+            }
+        } catch (err) {
+            console.error("Failed to toggle status:", err);
+            alert("Error updating status");
+        }
     };
 
     const filteredMonthlyBurn = filtered
@@ -354,7 +440,7 @@ export default function RecurringExpenses() {
                         <p className="text-[13px] text-zinc-500 mt-0.5">Track and manage all your repeating costs in one place.</p>
                     </div>
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => router.push("/recurring-expenses/new")}
                         className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -567,8 +653,14 @@ export default function RecurringExpenses() {
                 </div>
             </div>
 
-            {showModal && (
-                <CreateExpenseModal onClose={() => setShowModal(false)} onAdd={handleAdd} />
+            {/* Loading state rendering */}
+            {loading && (
+                <div className="fixed inset-0 bg-[#FAFAFA]/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-2">
+                        <RefreshCw className="w-6 h-6 text-zinc-500 animate-spin" />
+                        <p className="text-[13px] text-zinc-500">Loading...</p>
+                    </div>
+                </div>
             )}
         </div>
     );

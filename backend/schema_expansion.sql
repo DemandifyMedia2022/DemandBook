@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS recurring_expenses (
     frequency VARCHAR(50) NOT NULL CHECK (frequency IN ('Daily', 'Weekly', 'Monthly', 'Quarterly', 'Yearly')),
     next_date DATE NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
+    other_details JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -159,6 +160,7 @@ CREATE TABLE IF NOT EXISTS recurring_bills (
     frequency VARCHAR(50) NOT NULL CHECK (frequency IN ('Daily', 'Weekly', 'Monthly', 'Quarterly', 'Yearly')),
     next_date DATE NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
+    other_details JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

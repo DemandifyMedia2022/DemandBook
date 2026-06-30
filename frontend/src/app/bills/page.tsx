@@ -199,7 +199,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -212,12 +213,15 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  RefreshCw,
+  X,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 interface Bill {
+  id?: number;
   number: string;
   vendor: string;
   amount: number;
@@ -225,6 +229,9 @@ interface Bill {
   paymentMethod: string;
   status: "Overdue" | "Open" | "Paid";
   clearedDate?: string;
+  client_id?: number;
+  raw_due_date?: string;
+  other_details?: any;
 }
 
 // ---------------------------------------------------------------------------
@@ -337,40 +344,90 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 export default function Bills() {
+  const router = useRouter();
   const [bills, setBills] = useState<Bill[]>(initialBills);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All");
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [editingBill, setEditingBill] = useState<Bill | null>(null);
+  const [vendors, setVendors] = useState<any[]>([]);
 
-  const [newNumber, setNewNumber] = useState("BILL-2024-006");
-  const [newVendor, setNewVendor] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-  const [newDueDate, setNewDueDate] = useState("");
-  const [newPaymentMethod, setNewPaymentMethod] = useState("Bank Transfer");
-  const [newStatus, setNewStatus] = useState<Bill["status"]>("Open");
+  const fetchBills = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      const res = await fetch("http://localhost:8888/api/bills/list", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.bills) {
+        const mapped = data.bills.map((b: any) => ({
+          id: b.id,
+          number: b.number,
+          vendor: b.vendor || "—",
+          amount: parseFloat(b.amount) || 0,
+          dueDate: b.due_date ? new Date(b.due_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "—",
+          paymentMethod: b.payment_method || "—",
+          status: b.status || "Open",
+          clearedDate: b.cleared_date || undefined,
+          client_id: b.client_id,
+          raw_due_date: b.due_date || "",
+          other_details: b.other_details ? (typeof b.other_details === 'string' ? JSON.parse(b.other_details) : b.other_details) : null
+        }));
+        setBills(mapped);
+      }
 
-  const handleRecordPayment = (billNumber: string) => {
-    setBills(bills.map((b) =>
-      b.number === billNumber
-        ? { ...b, status: "Paid", clearedDate: new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) }
-        : b
-    ));
+      // Fetch vendors list
+      const vendorRes = await fetch("http://localhost:8888/api/client/list?type=vendor", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const vendorData = await vendorRes.json();
+      if (vendorData.success && vendorData.clients) {
+        setVendors(vendorData.clients.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          customId: c.custom_id
+        })));
+      }
+    } catch (err) {
+      console.error("Failed to load bills:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreateBill = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newVendor || !newAmount) return;
-    setBills([
-      { number: newNumber, vendor: newVendor, amount: parseFloat(newAmount), dueDate: newDueDate || "—", paymentMethod: newPaymentMethod, status: newStatus },
-      ...bills,
-    ]);
-    setShowCreateModal(false);
-    setNewNumber("BILL-2024-" + String(bills.length + 6).padStart(3, "0"));
-    setNewVendor(""); setNewAmount(""); setNewDueDate(""); setNewPaymentMethod("Bank Transfer"); setNewStatus("Open");
+  useEffect(() => {
+    fetchBills();
+  }, []);
+
+  const handleRecordPayment = async (billNumber: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8888/api/bills/pay", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ billNumber })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchBills();
+      } else {
+        alert(data.message || "Failed to record payment");
+      }
+    } catch (err) {
+      console.error("Failed to clear bill:", err);
+      alert("Error recording bill payment");
+    }
   };
 
   const filtered = bills.filter((b) => {
@@ -385,9 +442,6 @@ export default function Bills() {
   const overdueTotal = bills.filter((b) => b.status === "Overdue").reduce((s, b) => s + b.amount, 0);
   const paidCount = bills.filter((b) => b.status === "Paid").length;
 
-  const inputCls = "w-full px-3 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors text-zinc-900 placeholder:text-zinc-400";
-  const selectCls = "w-full px-3 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors text-zinc-900 cursor-pointer";
-
   return (
     <div className="bg-[#FAFAFA] min-h-screen font-sans antialiased">
       <div className="max-w-[1280px] mx-auto px-8 py-8 space-y-6">
@@ -399,7 +453,7 @@ export default function Bills() {
             <p className="text-[13px] text-zinc-500 mt-0.5">Manage vendor bills, track payables, and record payments.</p>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => router.push("/bills/new")}
             className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
@@ -451,159 +505,798 @@ export default function Bills() {
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="appearance-none pl-3 pr-8 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors cursor-pointer"
+                  className="appearance-none bg-zinc-50 border border-zinc-200 text-zinc-700 text-[13px] pl-3 pr-8 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 cursor-pointer"
                 >
-                  <option value="All">All Status</option>
-                  <option value="Open">Open</option>
-                  <option value="Overdue">Overdue</option>
-                  <option value="Paid">Paid</option>
+                  {["All", "Open", "Overdue", "Paid"].map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           </div>
 
           {/* Table */}
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-zinc-100">
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Bill</th>
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Status</th>
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Payment Method</th>
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Due Date</th>
-                <th className="px-6 py-2.5 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Amount</th>
-                <th className="px-6 py-2.5 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {filtered.map((bill) => (
-                <tr key={bill.number} className="hover:bg-zinc-50/70 transition-colors cursor-pointer">
-                  {/* Bill number + vendor */}
-                  <td className="px-6 py-3">
-                    <div>
-                      <p className="text-[13px] font-medium text-zinc-900">{bill.vendor}</p>
-                      <p className="text-[12px] text-zinc-500 font-mono">{bill.number}</p>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-zinc-100 bg-zinc-50/50">
+                  {["Bill #", "Vendor", "Payment Method", "Amount", "Due Date", "Status", ""].map((h, idx) => (
+                    <th
+                      key={h}
+                      className={cn(
+                        "px-6 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider",
+                        idx === 3 && "text-right"
+                      )}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {filtered.map((bill) => (
+                  <tr 
+                    key={bill.number} 
+                    onClick={() => setSelectedBill(bill)}
+                    className="hover:bg-zinc-50/40 transition-colors cursor-pointer group"
+                  >
+                    {/* Bill # */}
+                    <td className="px-6 py-4">
+                      <span className="font-mono text-[13px] font-bold text-[#5B5FEF]">{bill.number}</span>
+                    </td>
 
-                  {/* Status */}
-                  <td className="px-6 py-3">
-                    <StatusBadge status={bill.status} />
-                  </td>
+                    {/* Vendor */}
+                    <td className="px-6 py-4">
+                      <p className="text-[13px] font-semibold text-zinc-800">{bill.vendor}</p>
+                    </td>
 
-                  {/* Payment method */}
-                  <td className="px-6 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <CreditCard className="w-3.5 h-3.5 text-zinc-400" />
-                      <span className="text-[13px] text-zinc-600">{bill.paymentMethod}</span>
-                    </div>
-                  </td>
+                    {/* Payment Method */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5 text-zinc-500">
+                        <CreditCard className="w-4 h-4 text-zinc-400" />
+                        <span className="text-[13px]">{bill.paymentMethod}</span>
+                      </div>
+                    </td>
 
-                  {/* Due date */}
-                  <td className="px-6 py-3">
-                    {bill.clearedDate ? (
-                      <span className="text-[13px] text-emerald-600 font-medium">Cleared {bill.clearedDate}</span>
-                    ) : (
-                      <span className={cn("text-[13px]", bill.status === "Overdue" ? "text-red-600 font-semibold" : "text-zinc-500")}>
-                        {bill.dueDate}
+                    {/* Amount */}
+                    <td className="px-6 py-4 text-right">
+                      <span className="font-mono text-[13px] font-bold text-zinc-800 tabular-nums">
+                        ₹{bill.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </span>
-                    )}
-                  </td>
+                    </td>
 
-                  {/* Amount */}
-                  <td className="px-6 py-3 text-right font-mono text-[13px] font-semibold text-zinc-900 tabular-nums">
-                    ₹{bill.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </td>
+                    {/* Due date */}
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "text-[13px]",
+                        bill.status === "Overdue" ? "text-red-600 font-bold" : "text-zinc-500"
+                      )}>
+                        {bill.clearedDate ? (
+                          <span className="text-emerald-600 font-medium">Cleared on {bill.clearedDate}</span>
+                        ) : (
+                          bill.dueDate
+                        )}
+                      </span>
+                    </td>
 
-                  {/* Actions */}
-                  <td className="px-6 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    {/* Status */}
+                    <td className="px-6 py-4">
+                      <StatusBadge status={bill.status} />
+                    </td>
+
+                    {/* Action */}
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       {bill.status !== "Paid" && (
                         <button
                           onClick={() => handleRecordPayment(bill.number)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#5B5FEF] border border-[#5B5FEF]/20 bg-[#5B5FEF]/5 rounded-lg hover:bg-[#5B5FEF]/10 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:text-zinc-950 border border-zinc-200 hover:border-zinc-300 bg-white rounded-lg transition-all shadow-sm active:scale-95"
                         >
                           Record Payment
                         </button>
                       )}
-                      <button className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))}
 
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <p className="text-[13px] text-zinc-400">No bills match your filters.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-zinc-400 italic">
+                      No bills match your current filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Create modal */}
-      {showCreateModal && (
-        <Modal title="Record New Bill" onClose={() => setShowCreateModal(false)}>
-          <form onSubmit={handleCreateBill} className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[12px] font-medium text-zinc-600">Bill Number</label>
-                <input className={inputCls} required value={newNumber} onChange={(e) => setNewNumber(e.target.value)} />
+      {/* View Details Modal */}
+      {selectedBill && (
+        <BillDetailsModal
+          bill={selectedBill}
+          onClose={() => setSelectedBill(null)}
+          onEdit={() => {
+            setEditingBill(selectedBill);
+            setSelectedBill(null);
+          }}
+          onDeleteSuccess={() => {
+            setSelectedBill(null);
+            fetchBills();
+          }}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editingBill && (
+        <EditBillModal
+          bill={editingBill}
+          vendors={vendors}
+          onClose={() => setEditingBill(null)}
+          onSuccess={() => {
+            setEditingBill(null);
+            fetchBills();
+          }}
+        />
+      )}
+
+      {/* Loading state rendering */}
+      {loading && (
+        <div className="fixed inset-0 bg-[#FAFAFA]/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <RefreshCw className="w-6 h-6 text-zinc-500 animate-spin" />
+            <p className="text-[13px] text-zinc-500">Loading bills...</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// View Details Modal
+// ---------------------------------------------------------------------------
+interface BillDetailsModalProps {
+  bill: Bill;
+  onClose: () => void;
+  onEdit: () => void;
+  onDeleteSuccess: () => void;
+}
+
+function BillDetailsModal({ bill, onClose, onEdit, onDeleteSuccess }: BillDetailsModalProps) {
+  const [billDetails, setBillDetails] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    async function fetchDetails() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`http://localhost:8888/api/bills/${bill.id}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          setBillDetails(data.bill);
+        }
+      } catch (err) {
+        console.error("Failed to load bill details:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (bill.id) {
+      fetchDetails();
+    } else {
+      setLoading(false);
+    }
+  }, [bill.id]);
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this bill?")) return;
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:8888/api/bills/${bill.id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        onDeleteSuccess();
+      } else {
+        alert(data.message || "Failed to delete bill");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting bill");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-8 h-8 text-zinc-500 animate-spin" />
+          <p className="text-[13px] text-zinc-500">Fetching bill details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const activeBill = billDetails || bill;
+  const rawDetails = activeBill.other_details ? (typeof activeBill.other_details === 'string' ? JSON.parse(activeBill.other_details) : activeBill.other_details) : {};
+  const items = rawDetails.items || [];
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white border border-zinc-200 rounded-2xl shadow-2xl w-full max-w-[800px] my-8 overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 flex-shrink-0">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-[16px] font-bold text-zinc-900">Vendor Bill Details</h3>
+              <span className="font-mono text-xs text-zinc-500">#{bill.number}</span>
+            </div>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Clearing status: {bill.status}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6 overflow-y-auto flex-grow">
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Vendor</p>
+              <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{bill.vendor}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Order Number</p>
+              <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{rawDetails.order_number || "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Bill Date</p>
+              <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{rawDetails.bill_date || "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Due Date</p>
+              <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{bill.dueDate || "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Payment Terms</p>
+              <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{bill.paymentMethod || "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">A/P Account</p>
+              <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{rawDetails.ap_account || "Accounts Payable"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Reverse Charge</p>
+              <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{rawDetails.reverse_charge ? "Yes" : "No"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Reporting Tags</p>
+              <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{rawDetails.reporting_tags || "—"}</p>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div>
+            <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Line Items Table</h4>
+            <div className="border border-zinc-200 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-zinc-50/50">
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500">Details</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-32">Account</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-16 text-right">Qty</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-24 text-right">Rate</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-24 text-center">Discount</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-20 text-center">Tax</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-28 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {items.map((item: any, i: number) => (
+                    <tr key={i} className="hover:bg-zinc-50/20">
+                      <td className="px-4 py-2 text-[13px] text-zinc-800 font-medium">{item.description}</td>
+                      <td className="px-4 py-2 text-[13px] text-zinc-600">{item.account || "—"}</td>
+                      <td className="px-4 py-2 text-[13px] text-zinc-600 font-mono text-right tabular-nums">{parseFloat(item.quantity).toFixed(2)}</td>
+                      <td className="px-4 py-2 text-[13px] text-zinc-600 font-mono text-right tabular-nums">₹{parseFloat(item.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-2 text-[13px] text-zinc-600 text-center">{item.discount_val}{item.discount_type}</td>
+                      <td className="px-4 py-2 text-[13px] text-zinc-600 text-center">{item.tax_rate}%</td>
+                      <td className="px-4 py-2 text-[13px] font-semibold text-zinc-800 font-mono text-right tabular-nums">₹{parseFloat(item.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                  {items.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-6 text-center text-xs text-zinc-400 italic">No line items mapped.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pricing Summary */}
+          <div className="flex justify-end pt-2">
+            <div className="w-64 bg-zinc-50 p-4 border border-zinc-100 rounded-xl space-y-2 text-xs">
+              <div className="flex justify-between text-zinc-500">
+                <span>Sub Total</span>
+                <span className="font-mono">₹{parseFloat(bill.amount as any).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[12px] font-medium text-zinc-600">Status</label>
-                <select className={selectCls} value={newStatus} onChange={(e) => setNewStatus(e.target.value as Bill["status"])}>
-                  <option value="Open">Open</option>
-                  <option value="Overdue">Overdue</option>
-                  <option value="Paid">Paid</option>
-                </select>
+              <div className="flex justify-between text-zinc-500">
+                <span>TDS ({rawDetails.tds_rate || "0"}%)</span>
+                <span className="font-mono">- ₹{((parseFloat(bill.amount as any) * (parseFloat(rawDetails.tds_rate) || 0)) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between text-zinc-500">
+                <span>TCS ({rawDetails.tcs_rate || "0"}%)</span>
+                <span className="font-mono">+ ₹{((parseFloat(bill.amount as any) * (parseFloat(rawDetails.tcs_rate) || 0)) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between text-zinc-500">
+                <span>Adjustment</span>
+                <span className="font-mono">₹{parseFloat(rawDetails.adjustment || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between font-bold text-zinc-900 border-t border-zinc-200 pt-2 text-sm">
+                <span>Total Amount</span>
+                <span className="font-mono text-[#5B5FEF]">₹{parseFloat(bill.amount as any).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[12px] font-medium text-zinc-600">Vendor Name</label>
-              <input className={inputCls} required placeholder="e.g. Acme Supplies" value={newVendor} onChange={(e) => setNewVendor(e.target.value)} />
+          </div>
+
+          {/* Notes */}
+          <div>
+            <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Notes</h4>
+            <div className="p-3 bg-zinc-50 rounded-lg text-xs text-zinc-600 border border-zinc-100 min-h-[60px] whitespace-pre-wrap">
+              {rawDetails.notes || "—"}
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[12px] font-medium text-zinc-600">Amount (₹)</label>
-                <input type="number" step="0.01" required placeholder="0.00" className={inputCls} value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[12px] font-medium text-zinc-600">Due Date</label>
-                <input className={inputCls} placeholder="Nov 30, 2023" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
-              </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-zinc-100 bg-zinc-50 flex items-center justify-between flex-shrink-0">
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
+          >
+            {deleting ? "Deleting..." : "Delete Bill"}
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-bold text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={onEdit}
+              className="px-4 py-2 text-xs font-bold text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors"
+            >
+              Edit Bill
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Edit Bill Modal
+// ---------------------------------------------------------------------------
+interface EditBillModalProps {
+  bill: Bill;
+  vendors: any[];
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function EditBillModal({ bill, vendors, onClose, onSuccess }: EditBillModalProps) {
+  const [billNumber, setBillNumber] = useState(bill.number);
+  const [vendorId, setVendorId] = useState("");
+  
+  const rawDetails = bill.other_details || {};
+  const [orderNumber, setOrderNumber] = useState(rawDetails.order_number || "");
+  const [billDate, setBillDate] = useState(rawDetails.bill_date || "");
+  const [dueDate, setDueDate] = useState(bill.raw_due_date || "");
+  const [paymentTerms, setPaymentTerms] = useState(bill.paymentMethod || "Due on Receipt");
+  const [apAccount, setApAccount] = useState(rawDetails.ap_account || "Accounts Payable");
+  const [reverseCharge, setReverseCharge] = useState(rawDetails.reverse_charge || false);
+  const [notes, setNotes] = useState(rawDetails.notes || "");
+  const [tdsRate, setTdsRate] = useState(rawDetails.tds_rate || "0");
+  const [tcsRate, setTcsRate] = useState(rawDetails.tcs_rate || "0");
+  const [adjustment, setAdjustment] = useState(rawDetails.adjustment || "0");
+  const [status, setStatus] = useState<Bill["status"]>(bill.status);
+
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Set vendor ID based on matching vendor name
+  useEffect(() => {
+    if (vendors.length > 0 && bill.vendor) {
+      const matched = vendors.find(v => v.name.toLowerCase() === bill.vendor.toLowerCase());
+      if (matched) {
+        setVendorId(String(matched.id));
+      }
+    }
+  }, [vendors, bill.vendor]);
+
+  // Load items
+  useEffect(() => {
+    if (rawDetails.items) {
+      setRows(rawDetails.items.map((item: any, i: number) => ({
+        id: i + 1,
+        itemDetails: item.description || "",
+        account: item.account || "Cost of Goods Sold",
+        quantity: parseFloat(item.quantity) || 1,
+        rate: parseFloat(item.rate) || 0,
+        discountVal: item.discount_val || 0,
+        discountType: item.discount_type || "%",
+        tax: `GST ${item.tax_rate}%`,
+        customerId: item.customer_id || "",
+        amount: parseFloat(item.amount) || 0
+      })));
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  }, [bill.id]);
+
+  const FIELD = "w-full px-3 py-2 text-[13px] bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 transition-colors text-zinc-800 placeholder:text-zinc-400";
+  const SELECT = cn(FIELD, "appearance-none cursor-pointer");
+
+  const updateRow = (id: number, field: string, val: any) => {
+    setRows(prevRows =>
+      prevRows.map(row => {
+        if (row.id !== id) return row;
+        const updated = { ...row, [field]: val };
+        
+        const qty = parseFloat(updated.quantity) || 0;
+        const rate = parseFloat(updated.rate) || 0;
+        const baseAmount = qty * rate;
+        const discVal = parseFloat(updated.discountVal) || 0;
+        const discountAmt = updated.discountType === "%" ? (baseAmount * discVal) / 100 : discVal;
+        
+        updated.amount = Math.max(0, baseAmount - discountAmt);
+        return updated;
+      })
+    );
+  };
+
+  const addRow = () => {
+    const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
+    setRows([...rows, {
+      id: nextId,
+      itemDetails: "",
+      account: "Cost of Goods Sold",
+      quantity: 1,
+      rate: 0,
+      discountVal: 0,
+      discountType: "%",
+      tax: "GST 18%",
+      customerId: "",
+      amount: 0
+    }]);
+  };
+
+  const removeRow = (id: number) => {
+    if (rows.length === 1) {
+      setRows([{
+        id: 1,
+        itemDetails: "",
+        account: "Cost of Goods Sold",
+        quantity: 1,
+        rate: 0,
+        discountVal: 0,
+        discountType: "%",
+        tax: "GST 18%",
+        customerId: "",
+        amount: 0
+      }]);
+    } else {
+      setRows(rows.filter(r => r.id !== id));
+    }
+  };
+
+  const subTotal = rows.reduce((acc, r) => acc + r.amount, 0);
+  const tdsAmount = (subTotal * (parseFloat(tdsRate) || 0)) / 100;
+  const tcsAmount = (subTotal * (parseFloat(tcsRate) || 0)) / 100;
+  const grandTotal = Math.max(0, subTotal - tdsAmount + tcsAmount + (parseFloat(adjustment) || 0));
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      const selectedVendor = vendors.find(v => String(v.id) === String(vendorId));
+
+      const payload = {
+        number: billNumber,
+        vendorName: selectedVendor ? selectedVendor.name : bill.vendor,
+        amount: grandTotal,
+        due_date: dueDate,
+        payment_method: paymentTerms,
+        status: status,
+        other_details: {
+          ...rawDetails,
+          order_number: orderNumber,
+          bill_date: billDate,
+          ap_account: apAccount,
+          reverse_charge: reverseCharge,
+          notes: notes,
+          tds_rate: tdsRate,
+          tcs_rate: tcsRate,
+          adjustment: adjustment,
+          items: rows.map(r => {
+            let taxVal = 18;
+            if (r.tax.includes("0%")) taxVal = 0;
+            else if (r.tax.includes("5%")) taxVal = 5;
+            else if (r.tax.includes("12%")) taxVal = 12;
+            else if (r.tax.includes("18%")) taxVal = 18;
+            else if (r.tax.includes("28%")) taxVal = 28;
+            else if (r.tax.includes("Out of Scope")) taxVal = 0;
+
+            return {
+              description: r.itemDetails,
+              account: r.account,
+              quantity: parseFloat(r.quantity) || 1,
+              rate: parseFloat(r.rate) || 0,
+              discount_val: r.discountVal,
+              discount_type: r.discountType,
+              tax_rate: taxVal,
+              customer_id: r.customerId || null,
+              amount: r.amount
+            };
+          })
+        }
+      };
+
+      const res = await fetch(`http://localhost:8888/api/bills/${bill.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSuccess();
+      } else {
+        alert(data.message || "Failed to update bill");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error saving bill changes");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-8 h-8 text-zinc-500 animate-spin" />
+          <p className="text-[13px] text-zinc-500">Loading editor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <form onSubmit={handleSave} className="bg-white border border-zinc-200 rounded-2xl shadow-2xl w-full max-w-[850px] my-8 overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 flex-shrink-0">
+          <div>
+            <h3 className="text-[16px] font-bold text-zinc-900">Edit Vendor Bill</h3>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Modify properties and rows for Bill #{bill.number}</p>
+          </div>
+          <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6 overflow-y-auto flex-grow">
+          {/* Metadata Edit Form Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Bill Number</label>
+              <input required className={FIELD} value={billNumber} onChange={(e) => setBillNumber(e.target.value)} />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[12px] font-medium text-zinc-600">Payment Method</label>
-              <select className={selectCls} value={newPaymentMethod} onChange={(e) => setNewPaymentMethod(e.target.value)}>
-                {["Bank Transfer", "Credit Card", "ACH", "Wire", "UPI", "Cash"].map((m) => (
-                  <option key={m} value={m}>{m}</option>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Vendor</label>
+              <select required className={SELECT} value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
+                <option value="">Select Vendor</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>{v.name} ({v.customId})</option>
                 ))}
               </select>
             </div>
-            <div className="pt-4 border-t border-zinc-100 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 text-[13px] font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-zinc-900 text-white text-[13px] font-medium rounded-lg hover:bg-zinc-800 transition-colors"
-              >
-                Create Bill
-              </button>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Order Number</label>
+              <input className={FIELD} value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} />
             </div>
-          </form>
-        </Modal>
-      )}
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Bill Date</label>
+              <input type="date" required className={FIELD} value={billDate} onChange={(e) => setBillDate(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Due Date</label>
+              <input type="date" required className={FIELD} value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Status</label>
+              <select className={SELECT} value={status} onChange={(e) => setStatus(e.target.value as any)}>
+                <option value="Open">Open</option>
+                <option value="Overdue">Overdue</option>
+                <option value="Paid">Paid</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Payment Terms</label>
+              <select className={SELECT} value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)}>
+                <option value="Due on Receipt">Due on Receipt</option>
+                <option value="Net 15">Net 15</option>
+                <option value="Net 30">Net 30</option>
+                <option value="Net 45">Net 45</option>
+                <option value="Net 60">Net 60</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Accounts Payable (AP)</label>
+              <select className={SELECT} value={apAccount} onChange={(e) => setApAccount(e.target.value)}>
+                <option value="Accounts Payable">Accounts Payable</option>
+                <option value="Accrued Liabilities">Accrued Liabilities</option>
+              </select>
+            </div>
+            <div className="flex items-center pt-5">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-zinc-500">
+                <input type="checkbox" checked={reverseCharge} onChange={(e) => setReverseCharge(e.target.checked)} className="rounded border-zinc-300 text-[#5B5FEF] focus:ring-[#5B5FEF] w-4 h-4" />
+                Reverse Charge Applicable
+              </label>
+            </div>
+          </div>
+
+          {/* Editable Item Table */}
+          <div>
+            <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Item Details Grid</h4>
+            <div className="border border-zinc-200 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-zinc-50/50">
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500">Item Details</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-32">Account</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-16">Qty</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-20">Rate</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-24">Discount</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-24">Tax</th>
+                    <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 text-right w-24">Amount</th>
+                    <th className="px-4 py-2 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {rows.map((row) => (
+                    <tr key={row.id}>
+                      <td className="p-2">
+                        <input required className={FIELD} value={row.itemDetails} onChange={(e) => updateRow(row.id, "itemDetails", e.target.value)} />
+                      </td>
+                      <td className="p-2">
+                        <select className={SELECT} value={row.account} onChange={(e) => updateRow(row.id, "account", e.target.value)}>
+                          <option value="Cost of Goods Sold">Cost of Goods Sold</option>
+                          <option value="Materials Purchase">Materials Purchase</option>
+                          <option value="Office Supplies">Office Supplies</option>
+                          <option value="Software Subscriptions">Software Subscriptions</option>
+                          <option value="Other Expenses">Other Expenses</option>
+                        </select>
+                      </td>
+                      <td className="p-2">
+                        <input type="number" min={0.01} step="0.01" className={FIELD} value={row.quantity} onChange={(e) => updateRow(row.id, "quantity", e.target.value)} />
+                      </td>
+                      <td className="p-2">
+                        <input type="number" min={0} step="0.01" className={FIELD} value={row.rate} onChange={(e) => updateRow(row.id, "rate", e.target.value)} />
+                      </td>
+                      <td className="p-2">
+                        <div className="flex items-center gap-1">
+                          <input type="number" className="w-12 px-1 py-0.5 text-right font-mono text-xs border border-zinc-200 rounded" value={row.discountVal} onChange={(e) => updateRow(row.id, "discountVal", e.target.value)} />
+                          <select className="px-0.5 py-0.5 text-xs border border-zinc-200 rounded" value={row.discountType} onChange={(e) => updateRow(row.id, "discountType", e.target.value)}>
+                            <option value="%">%</option>
+                            <option value="₹">₹</option>
+                          </select>
+                        </div>
+                      </td>
+                      <td className="p-2">
+                        <select className={SELECT} value={row.tax} onChange={(e) => updateRow(row.id, "tax", e.target.value)}>
+                          <option value="Out of Scope">Out of Scope</option>
+                          <option value="GST 0%">GST 0%</option>
+                          <option value="GST 5%">GST 5%</option>
+                          <option value="GST 12%">GST 12%</option>
+                          <option value="GST 18%">GST 18%</option>
+                          <option value="GST 28%">GST 28%</option>
+                        </select>
+                      </td>
+                      <td className="p-2 text-right font-mono font-semibold tabular-nums text-zinc-700">
+                        ₹{row.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-2 text-center">
+                        <button type="button" onClick={() => removeRow(row.id)} className="text-red-500 hover:bg-red-50 p-1 rounded-lg">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="p-2 bg-zinc-50 border-t border-zinc-200">
+                <button type="button" onClick={addRow} className="text-xs font-bold text-[#5B5FEF] hover:underline flex items-center gap-1">
+                  + Add Row
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes & Summary calculations */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Notes</label>
+                <textarea className={FIELD} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="bg-zinc-50 p-4 border border-zinc-100 rounded-xl space-y-2 text-[13px]">
+              <div className="flex justify-between font-medium text-zinc-500">
+                <span>Sub Total</span>
+                <span className="font-mono">₹{subTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between items-center text-zinc-500">
+                <span>TDS (%)</span>
+                <select className="px-1.5 py-0.5 text-xs border border-zinc-200 rounded w-24" value={tdsRate} onChange={(e) => setTdsRate(e.target.value)}>
+                  <option value="0">0%</option>
+                  <option value="1">1%</option>
+                  <option value="2">2%</option>
+                  <option value="5">5%</option>
+                  <option value="10">10%</option>
+                </select>
+              </div>
+              <div className="flex justify-between items-center text-zinc-500">
+                <span>TCS (%)</span>
+                <select className="px-1.5 py-0.5 text-xs border border-zinc-200 rounded w-24" value={tcsRate} onChange={(e) => setTcsRate(e.target.value)}>
+                  <option value="0">0%</option>
+                  <option value="0.1">0.1%</option>
+                  <option value="1">1%</option>
+                  <option value="5">5%</option>
+                </select>
+              </div>
+              <div className="flex justify-between items-center text-zinc-500">
+                <span>Adjustment</span>
+                <input type="number" step="0.01" className="w-24 px-1.5 py-0.5 text-right font-mono text-xs border border-zinc-200 rounded" value={adjustment} onChange={(e) => setAdjustment(e.target.value)} />
+              </div>
+              <div className="flex justify-between font-bold text-zinc-900 border-t border-zinc-200 pt-2 text-sm">
+                <span>Grand Total</span>
+                <span className="font-mono text-[#5B5FEF]">₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-zinc-100 bg-zinc-50 flex items-center justify-end gap-3 flex-shrink-0">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-bold text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors">
+            Cancel
+          </button>
+          <button type="submit" disabled={saving} className="px-4 py-2 text-xs font-bold text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors flex items-center gap-1.5">
+            {saving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+            Save Changes
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

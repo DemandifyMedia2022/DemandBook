@@ -199,6 +199,7 @@ CREATE TABLE IF NOT EXISTS bills (
     payment_method VARCHAR(100) DEFAULT 'Bank Transfer',
     status VARCHAR(50) DEFAULT 'Open' CHECK (status IN ('Overdue', 'Open', 'Paid')),
     cleared_date VARCHAR(100),
+    other_details JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
     Search,
@@ -16,12 +17,13 @@ import {
     Receipt,
     Pause,
     Play,
+    RefreshCw,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-type Frequency = "Daily" | "Weekly" | "Monthly" | "Quarterly" | "Annually";
+type Frequency = "Daily" | "Weekly" | "Monthly" | "Quarterly" | "Yearly";
 type BillStatus = "Active" | "Paused" | "Ended";
 
 interface RecurringBill {
@@ -39,6 +41,9 @@ interface RecurringBill {
     paymentTerms: string;
     paymentMethod: string;
     status: BillStatus;
+    client_id?: number;
+    raw_next_date?: string;
+    other_details?: any;
 }
 
 // ---------------------------------------------------------------------------
@@ -52,19 +57,19 @@ const STATUS_CONFIG: Record<
         dot: "bg-emerald-500",
         text: "text-emerald-700",
         bg: "bg-emerald-50",
-        icon: <CheckCircle2 className="w-3 h-3" />,
+        icon: <CheckCircle2 className="w-3.5 h-3.5" />,
     },
     Paused: {
         dot: "bg-amber-400",
         text: "text-amber-700",
         bg: "bg-amber-50",
-        icon: <PauseCircle className="w-3 h-3" />,
+        icon: <PauseCircle className="w-3.5 h-3.5" />,
     },
     Ended: {
         dot: "bg-zinc-400",
         text: "text-zinc-600",
         bg: "bg-zinc-100",
-        icon: <XCircle className="w-3 h-3" />,
+        icon: <XCircle className="w-3.5 h-3.5" />,
     },
 };
 
@@ -73,80 +78,11 @@ const FREQ_CONFIG: Record<Frequency, { bg: string; text: string }> = {
     Weekly: { bg: "bg-blue-50", text: "text-blue-700" },
     Monthly: { bg: "bg-indigo-50", text: "text-indigo-700" },
     Quarterly: { bg: "bg-cyan-50", text: "text-cyan-700" },
-    Annually: { bg: "bg-zinc-100", text: "text-zinc-600" },
+    Yearly: { bg: "bg-zinc-100", text: "text-zinc-600" },
 };
 
-const FREQUENCIES: Frequency[] = ["Daily", "Weekly", "Monthly", "Quarterly", "Annually"];
+const FREQUENCIES: Frequency[] = ["Daily", "Weekly", "Monthly", "Quarterly", "Yearly"];
 const STATUSES: BillStatus[] = ["Active", "Paused", "Ended"];
-const CATEGORIES = [
-    "All", "Rent", "Utilities", "Loan EMI", "Subscriptions",
-    "Retainer", "Supplier Contract", "Logistics", "Insurance", "Other",
-];
-const PAYMENT_METHODS = ["Bank Transfer", "Credit Card", "ACH", "Wire", "UPI", "Auto-debit", "Cheque"];
-const PAYMENT_TERMS = ["Net 7", "Net 15", "Net 30", "Net 45", "Net 60", "Due on Receipt"];
-
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-const today = new Date();
-const daysFromNow = (n: number) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + n);
-    return d;
-};
-const fmt_date = (d: Date) =>
-    d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
-
-const initialBills: RecurringBill[] = [
-    {
-        id: "RB-001", name: "Office Lease", vendor: "DLF Properties Ltd.",
-        category: "Rent", referenceNo: "LEASE-2023-001",
-        amount: 95000, frequency: "Monthly",
-        nextDueDate: daysFromNow(2).toISOString(), nextDueDateLabel: fmt_date(daysFromNow(2)),
-        startDate: "Jan 01, 2023", paymentTerms: "Due on Receipt",
-        paymentMethod: "Bank Transfer", status: "Active",
-    },
-    {
-        id: "RB-002", name: "Internet & Leased Line", vendor: "Tata Communications",
-        category: "Utilities", referenceNo: "TCL-98423",
-        amount: 18500, frequency: "Monthly",
-        nextDueDate: daysFromNow(8).toISOString(), nextDueDateLabel: fmt_date(daysFromNow(8)),
-        startDate: "Mar 01, 2022", paymentTerms: "Net 15",
-        paymentMethod: "Auto-debit", status: "Active",
-    },
-    {
-        id: "RB-003", name: "Term Loan EMI", vendor: "HDFC Bank",
-        category: "Loan EMI", referenceNo: "HL-20230045",
-        amount: 142000, frequency: "Monthly",
-        nextDueDate: daysFromNow(1).toISOString(), nextDueDateLabel: fmt_date(daysFromNow(1)),
-        startDate: "Apr 01, 2023", paymentTerms: "Due on Receipt",
-        paymentMethod: "Auto-debit", status: "Active",
-    },
-    {
-        id: "RB-004", name: "Legal Retainer", vendor: "Khaitan & Co.",
-        category: "Retainer", referenceNo: "KHT-Q2-2024",
-        amount: 75000, frequency: "Quarterly",
-        nextDueDate: daysFromNow(18).toISOString(), nextDueDateLabel: fmt_date(daysFromNow(18)),
-        startDate: "Jan 01, 2024", paymentTerms: "Net 7",
-        paymentMethod: "Wire", status: "Active",
-    },
-    {
-        id: "RB-005", name: "Annual Audit Fee", vendor: "Deloitte India LLP",
-        category: "Retainer", referenceNo: "DEL-AUD-2024",
-        amount: 380000, frequency: "Annually",
-        nextDueDate: daysFromNow(60).toISOString(), nextDueDateLabel: fmt_date(daysFromNow(60)),
-        startDate: "Jun 01, 2022", paymentTerms: "Net 30",
-        paymentMethod: "Bank Transfer", status: "Paused",
-    },
-    {
-        id: "RB-006", name: "Warehouse Storage", vendor: "Blue Dart Logistics",
-        category: "Logistics", referenceNo: "BDL-WH-112",
-        amount: 32000, frequency: "Monthly",
-        nextDueDate: daysFromNow(-2).toISOString(), nextDueDateLabel: fmt_date(daysFromNow(-2)),
-        startDate: "Feb 01, 2022", endDate: "Jan 31, 2024",
-        paymentTerms: "Net 15", paymentMethod: "Bank Transfer", status: "Ended",
-    },
-];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -161,12 +97,13 @@ function toMonthly(amount: number, freq: Frequency): number {
         case "Weekly": return amount * 4.33;
         case "Monthly": return amount;
         case "Quarterly": return amount / 3;
-        case "Annually": return amount / 12;
+        case "Yearly": return amount / 12;
     }
 }
 
 function getDueSeverity(isoDate: string, status: BillStatus): "overdue" | "soon" | "normal" {
     if (status !== "Active") return "normal";
+    const today = new Date();
     const diff = (new Date(isoDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
     if (diff < 0) return "overdue";
     if (diff <= 3) return "soon";
@@ -234,243 +171,93 @@ function FreqBadge({ freq }: { freq: Frequency }) {
 }
 
 // ---------------------------------------------------------------------------
-// Modal
-// ---------------------------------------------------------------------------
-const FIELD =
-    "w-full px-3 py-2 text-[13px] bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 transition-colors text-zinc-800 placeholder:text-zinc-400";
-const SELECT = cn(FIELD, "appearance-none cursor-pointer");
-
-function CreateBillModal({
-    onClose,
-    onAdd,
-}: {
-    onClose: () => void;
-    onAdd: (b: RecurringBill) => void;
-}) {
-    const [name, setName] = useState("");
-    const [vendor, setVendor] = useState("");
-    const [category, setCategory] = useState("Utilities");
-    const [referenceNo, setReferenceNo] = useState("");
-    const [amount, setAmount] = useState("");
-    const [frequency, setFrequency] = useState<Frequency>("Monthly");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [paymentTerms, setPaymentTerms] = useState("Net 30");
-    const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!name || !amount) return;
-        const nextDue = daysFromNow(
-            frequency === "Monthly" ? 30
-                : frequency === "Weekly" ? 7
-                    : frequency === "Annually" ? 365
-                        : 14,
-        );
-        onAdd({
-            id: `RB-${String(Math.floor(Math.random() * 900) + 100)}`,
-            name, vendor, category,
-            referenceNo: referenceNo || undefined,
-            amount: parseFloat(amount),
-            frequency,
-            nextDueDate: nextDue.toISOString(),
-            nextDueDateLabel: fmt_date(nextDue),
-            startDate: startDate || fmt_date(today),
-            endDate: endDate || undefined,
-            paymentTerms,
-            paymentMethod,
-            status: "Active",
-        });
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
-            <div className="bg-white border border-zinc-200 rounded-2xl shadow-2xl w-full max-w-[480px] overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-                    <div>
-                        <h3 className="text-[15px] font-semibold text-zinc-900">Add Recurring Bill</h3>
-                        <p className="text-[12px] text-zinc-500 mt-0.5">Set up a new repeating vendor bill</p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100 transition-colors text-zinc-400 hover:text-zinc-600"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {/* Bill name */}
-                    <div>
-                        <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                            Bill Name
-                        </label>
-                        <input
-                            required
-                            placeholder="e.g. Office Lease"
-                            className={FIELD}
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Vendor + Category */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                                Vendor
-                            </label>
-                            <input
-                                placeholder="e.g. HDFC Bank"
-                                className={FIELD}
-                                value={vendor}
-                                onChange={(e) => setVendor(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                                Category
-                            </label>
-                            <select
-                                className={SELECT}
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                            >
-                                {CATEGORIES.filter((c) => c !== "All").map((c) => (
-                                    <option key={c}>{c}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Reference No */}
-                    <div>
-                        <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                            Reference / Bill No. <span className="normal-case font-normal text-zinc-400">(optional)</span>
-                        </label>
-                        <input
-                            placeholder="e.g. INV-2024-001"
-                            className={FIELD}
-                            value={referenceNo}
-                            onChange={(e) => setReferenceNo(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Amount + Frequency */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                                Amount (₹)
-                            </label>
-                            <input
-                                type="number" step="0.01" min={0} required
-                                placeholder="0.00"
-                                className={FIELD}
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                                Frequency
-                            </label>
-                            <select
-                                className={SELECT}
-                                value={frequency}
-                                onChange={(e) => setFrequency(e.target.value as Frequency)}
-                            >
-                                {FREQUENCIES.map((f) => <option key={f}>{f}</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Payment Terms + Method */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                                Payment Terms
-                            </label>
-                            <select
-                                className={SELECT}
-                                value={paymentTerms}
-                                onChange={(e) => setPaymentTerms(e.target.value)}
-                            >
-                                {PAYMENT_TERMS.map((t) => <option key={t}>{t}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                                Payment Method
-                            </label>
-                            <select
-                                className={SELECT}
-                                value={paymentMethod}
-                                onChange={(e) => setPaymentMethod(e.target.value)}
-                            >
-                                {PAYMENT_METHODS.map((m) => <option key={m}>{m}</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Start + End Date */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                                Start Date
-                            </label>
-                            <input
-                                type="date"
-                                className={FIELD}
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
-                                End Date{" "}
-                                <span className="normal-case font-normal text-zinc-400">(optional)</span>
-                            </label>
-                            <input
-                                type="date"
-                                className={FIELD}
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="pt-2 flex items-center gap-2.5">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2.5 text-[13px] font-medium text-zinc-700 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="flex-1 px-4 py-2.5 text-[13px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors shadow-sm"
-                        >
-                            Add Bill
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
-
-// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 export default function RecurringBills() {
-    const [bills, setBills] = useState<RecurringBill[]>(initialBills);
+    const router = useRouter();
+    const [bills, setBills] = useState<RecurringBill[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("All");
     const [selectedStatus, setSelectedStatus] = useState("All");
-    const [showModal, setShowModal] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [selectedBill, setSelectedBill] = useState<RecurringBill | null>(null);
+
+    const fetchBills = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+            const res = await fetch("http://localhost:8888/api/recurring-bills/", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success && data.recurringBills) {
+                const mapped = data.recurringBills.map((b: any) => {
+                    const rawDetails = b.other_details ? (typeof b.other_details === 'string' ? JSON.parse(b.other_details) : b.other_details) : {};
+                    return {
+                        id: String(b.id),
+                        name: rawDetails.profile_name || `Template ${b.id}`,
+                        vendor: b.client_name || "—",
+                        category: "Supplier Contract",
+                        amount: parseFloat(b.amount) || 0,
+                        frequency: (b.frequency === "Yearly" ? "Yearly" : b.frequency) as Frequency,
+                        nextDueDate: b.next_date || "",
+                        nextDueDateLabel: b.next_date ? new Date(b.next_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "—",
+                        startDate: rawDetails.start_date ? new Date(rawDetails.start_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "—",
+                        paymentTerms: rawDetails.payment_terms || "Due on Receipt",
+                        paymentMethod: "Bank Transfer",
+                        status: b.is_active ? "Active" : "Paused",
+                        client_id: b.client_id,
+                        raw_next_date: b.next_date,
+                        other_details: rawDetails
+                    };
+                });
+                setBills(mapped);
+            }
+        } catch (err) {
+            console.error("Failed to load recurring bills:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchBills();
+    }, []);
+
+    const toggleStatus = async (bill: RecurringBill) => {
+        try {
+            const token = localStorage.getItem("token");
+            const nextStatus = bill.status === "Active" ? false : true;
+            const res = await fetch(`http://localhost:8888/api/recurring-bills/${bill.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    client_id: bill.client_id,
+                    amount: bill.amount,
+                    frequency: bill.frequency,
+                    next_date: bill.raw_next_date,
+                    is_active: nextStatus,
+                    other_details: bill.other_details
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchBills();
+            }
+        } catch (err) {
+            console.error("Failed to toggle template status:", err);
+        }
+    };
+
+    const handleDeleteSuccess = () => {
+        setSelectedBill(null);
+        fetchBills();
+    };
 
     const filtered = bills.filter((b) => {
         const q = searchQuery.toLowerCase();
@@ -478,10 +265,8 @@ export default function RecurringBills() {
             (
                 b.name.toLowerCase().includes(q) ||
                 b.vendor.toLowerCase().includes(q) ||
-                b.id.toLowerCase().includes(q) ||
-                (b.referenceNo?.toLowerCase().includes(q) ?? false)
+                b.id.toLowerCase().includes(q)
             ) &&
-            (selectedCategory === "All" || b.category === selectedCategory) &&
             (selectedStatus === "All" || b.status === selectedStatus)
         );
     });
@@ -489,11 +274,16 @@ export default function RecurringBills() {
     const activeBills = bills.filter((b) => b.status === "Active");
     const monthlyPayable = activeBills.reduce((s, b) => s + toMonthly(b.amount, b.frequency), 0);
     const activeCount = activeBills.length;
+    
+    const today = new Date();
     const dueThisWeek = activeBills.filter((b) => {
+        if (!b.nextDueDate) return false;
         const diff = (new Date(b.nextDueDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
         return diff >= 0 && diff <= 7;
     }).length;
+
     const overdueCount = activeBills.filter((b) => {
+        if (!b.nextDueDate) return false;
         const diff = (new Date(b.nextDueDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
         return diff < 0;
     }).length;
@@ -501,27 +291,6 @@ export default function RecurringBills() {
     const filteredMonthlyPayable = filtered
         .filter((b) => b.status === "Active")
         .reduce((s, b) => s + toMonthly(b.amount, b.frequency), 0);
-
-    const toggleStatus = (id: string) => {
-        setBills(
-            bills.map((b) =>
-                b.id === id
-                    ? {
-                        ...b,
-                        status:
-                            b.status === "Active" ? "Paused"
-                                : b.status === "Paused" ? "Active"
-                                    : b.status,
-                    }
-                    : b,
-            ),
-        );
-    };
-
-    const handleAdd = (bill: RecurringBill) => {
-        setBills([bill, ...bills]);
-        setShowModal(false);
-    };
 
     return (
         <div className="bg-[#FAFAFA] min-h-screen font-sans antialiased">
@@ -532,11 +301,11 @@ export default function RecurringBills() {
                     <div>
                         <h1 className="text-[22px] font-semibold text-zinc-900 tracking-tight">Recurring Bills</h1>
                         <p className="text-[13px] text-zinc-500 mt-0.5">
-                            Manage all repeating vendor bills and payables in one place.
+                            Manage all repeating vendor bills and templates.
                         </p>
                     </div>
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => router.push("/recurring-bills/new")}
                         className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -549,24 +318,22 @@ export default function RecurringBills() {
                     <StatCard
                         label="Monthly Payable"
                         value={fmt(Math.round(monthlyPayable))}
-                        delta={4.2}
-                        sub="Across all active bills"
+                        sub="Across all active templates"
                     />
                     <StatCard
-                        label="Active Bills"
+                        label="Active Templates"
                         value={String(activeCount)}
                         sub={`${bills.filter((b) => b.status === "Paused").length} paused`}
                     />
                     <StatCard
                         label="Due This Week"
                         value={String(dueThisWeek)}
-                        sub="Upcoming payments in 7 days"
+                        sub="Upcoming runs in 7 days"
                     />
                     <StatCard
-                        label="Overdue"
+                        label="Overdue Runs"
                         value={String(overdueCount)}
-                        delta={overdueCount > 0 ? -overdueCount * 10 : undefined}
-                        sub="Bills past their due date"
+                        sub="Templates behind schedule"
                     />
                 </div>
 
@@ -576,9 +343,9 @@ export default function RecurringBills() {
                     {/* Toolbar */}
                     <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between gap-4 flex-wrap">
                         <div>
-                            <h2 className="text-[14px] font-semibold text-zinc-900">Bill Register</h2>
+                            <h2 className="text-[14px] font-semibold text-zinc-900">Templates Register</h2>
                             <p className="text-[12px] text-zinc-500">
-                                {filtered.length} bill{filtered.length !== 1 ? "s" : ""}
+                                {filtered.length} template{filtered.length !== 1 ? "s" : ""}
                             </p>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -587,25 +354,11 @@ export default function RecurringBills() {
                                 <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
                                 <input
                                     type="text"
-                                    placeholder="Search bills or ref no..."
+                                    placeholder="Search templates or vendor..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full pl-8 pr-3 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors"
                                 />
-                            </div>
-
-                            {/* Category filter */}
-                            <div className="relative">
-                                <select
-                                    value={selectedCategory}
-                                    onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className="appearance-none pl-3 pr-8 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors cursor-pointer"
-                                >
-                                    {CATEGORIES.map((c) => (
-                                        <option key={c} value={c}>{c === "All" ? "All Categories" : c}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                             </div>
 
                             {/* Status filter */}
@@ -613,10 +366,10 @@ export default function RecurringBills() {
                                 <select
                                     value={selectedStatus}
                                     onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="appearance-none pl-3 pr-8 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors cursor-pointer"
+                                    className="appearance-none pl-3 pr-8 py-1.5 text-[13px] bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20 focus:border-[#5B5FEF]/40 focus:bg-white transition-colors cursor-pointer text-zinc-700"
                                 >
                                     <option value="All">All Status</option>
-                                    {STATUSES.map((s) => <option key={s}>{s}</option>)}
+                                    {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                                 </select>
                                 <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                             </div>
@@ -624,169 +377,156 @@ export default function RecurringBills() {
                     </div>
 
                     {/* Table */}
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="border-b border-zinc-100">
-                                {[
-                                    ["Bill", ""],
-                                    ["Reference", ""],
-                                    ["Frequency", ""],
-                                    ["Next Due", ""],
-                                    ["Terms", ""],
-                                    ["Amount", "text-right"],
-                                    ["Status", ""],
-                                    ["", ""],
-                                ].map(([h, cls], i) => (
-                                    <th
-                                        key={i}
-                                        className={cn(
-                                            "px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide",
-                                            cls,
-                                        )}
-                                    >
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-100">
-                            {filtered.map((bill) => {
-                                const severity = getDueSeverity(bill.nextDueDate, bill.status);
-                                return (
-                                    <tr
-                                        key={bill.id}
-                                        className={cn(
-                                            "transition-colors cursor-pointer group",
-                                            severity === "soon"
-                                                ? "bg-amber-50/40 hover:bg-amber-50/70"
-                                                : severity === "overdue"
-                                                    ? "bg-red-50/30 hover:bg-red-50/60"
-                                                    : "hover:bg-zinc-50/70",
-                                        )}
-                                    >
-                                        {/* Bill name + vendor */}
-                                        <td className="px-6 py-3">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-7 h-7 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
-                                                    <Receipt className="w-3.5 h-3.5 text-zinc-500" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[13px] font-medium text-zinc-900">{bill.name}</p>
-                                                    <p className="text-[12px] text-zinc-400">{bill.vendor || "—"}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        {/* Reference No */}
-                                        <td className="px-6 py-3">
-                                            {bill.referenceNo ? (
-                                                <span className="text-[12px] font-mono text-zinc-500 bg-zinc-50 border border-zinc-200 px-1.5 py-0.5 rounded">
-                                                    {bill.referenceNo}
-                                                </span>
-                                            ) : (
-                                                <span className="text-[13px] text-zinc-300">—</span>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead>
+                                <tr className="border-b border-zinc-100 bg-zinc-50/50">
+                                    {[
+                                        ["Bill Profile", ""],
+                                        ["Frequency", ""],
+                                        ["Next Run Date", ""],
+                                        ["Payment Terms", ""],
+                                        ["Template Total", "text-right"],
+                                        ["Status", ""],
+                                        ["", ""],
+                                    ].map(([h, cls], i) => (
+                                        <th
+                                            key={i}
+                                            className={cn(
+                                                "px-6 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wide",
+                                                cls,
                                             )}
-                                        </td>
+                                        >
+                                            {h}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-100">
+                                {filtered.map((bill) => {
+                                    const severity = getDueSeverity(bill.nextDueDate, bill.status);
+                                    return (
+                                        <tr
+                                            key={bill.id}
+                                            onClick={() => setSelectedBill(bill)}
+                                            className={cn(
+                                                "transition-colors cursor-pointer group",
+                                                severity === "soon"
+                                                    ? "bg-amber-50/40 hover:bg-amber-50/70"
+                                                    : severity === "overdue"
+                                                        ? "bg-red-50/30 hover:bg-red-50/60"
+                                                        : "hover:bg-zinc-50/70",
+                                            )}
+                                        >
+                                            {/* Bill profile name + vendor */}
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="w-7 h-7 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                                                        <Receipt className="w-3.5 h-3.5 text-zinc-500" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[13px] font-semibold text-zinc-800">{bill.name}</p>
+                                                        <p className="text-[12px] text-zinc-400">{bill.vendor || "—"}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
 
-                                        {/* Frequency */}
-                                        <td className="px-6 py-3">
-                                            <FreqBadge freq={bill.frequency} />
-                                        </td>
+                                            {/* Frequency */}
+                                            <td className="px-6 py-4">
+                                                <FreqBadge freq={bill.frequency} />
+                                            </td>
 
-                                        {/* Next due */}
-                                        <td className="px-6 py-3">
-                                            <div className="flex items-center gap-1.5">
-                                                {severity === "overdue" && (
-                                                    <>
-                                                        <span className="text-[12px] font-semibold text-red-600">
-                                                            {bill.nextDueDateLabel}
-                                                        </span>
-                                                        <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full">
-                                                            Overdue
-                                                        </span>
-                                                    </>
-                                                )}
-                                                {severity === "soon" && (
-                                                    <>
-                                                        <span className="text-[12px] font-semibold text-amber-600">
-                                                            {bill.nextDueDateLabel}
-                                                        </span>
-                                                        <span className="text-[10px] font-bold text-white bg-amber-400 px-1.5 py-0.5 rounded-full">
-                                                            Soon
-                                                        </span>
-                                                    </>
-                                                )}
-                                                {severity === "normal" && (
-                                                    <span className="text-[13px] text-zinc-500">{bill.nextDueDateLabel}</span>
-                                                )}
-                                            </div>
-                                        </td>
+                                            {/* Next due */}
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1.5">
+                                                    {severity === "overdue" && (
+                                                        <>
+                                                            <span className="text-[12px] font-semibold text-red-600">
+                                                                {bill.nextDueDateLabel}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full">
+                                                                Overdue
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                    {severity === "soon" && (
+                                                        <>
+                                                            <span className="text-[12px] font-semibold text-amber-600">
+                                                                {bill.nextDueDateLabel}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold text-white bg-amber-400 px-1.5 py-0.5 rounded-full">
+                                                                Soon
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                    {severity === "normal" && (
+                                                        <span className="text-[13px] text-zinc-500">{bill.nextDueDateLabel}</span>
+                                                    )}
+                                                </div>
+                                            </td>
 
-                                        {/* Payment Terms */}
-                                        <td className="px-6 py-3 text-[13px] text-zinc-500">{bill.paymentTerms}</td>
+                                            {/* Payment Terms */}
+                                            <td className="px-6 py-4 text-[13px] text-zinc-500">{bill.paymentTerms}</td>
 
-                                        {/* Amount */}
-                                        <td className="px-6 py-3 text-right font-mono text-[13px] font-semibold text-zinc-900 tabular-nums">
-                                            {fmt(bill.amount)}
-                                        </td>
+                                            {/* Amount */}
+                                            <td className="px-6 py-4 text-right font-mono text-[13px] font-semibold text-zinc-950 tabular-nums">
+                                                {fmt(bill.amount)}
+                                            </td>
 
-                                        {/* Status */}
-                                        <td className="px-6 py-3">
-                                            <StatusPill status={bill.status} />
-                                        </td>
+                                            {/* Status */}
+                                            <td className="px-6 py-4">
+                                                <StatusPill status={bill.status} />
+                                            </td>
 
-                                        {/* Actions */}
-                                        <td className="px-6 py-3">
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {bill.status !== "Ended" && (
-                                                    <button
-                                                        onClick={() => toggleStatus(bill.id)}
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#5B5FEF] border border-[#5B5FEF]/20 bg-[#5B5FEF]/5 rounded-lg hover:bg-[#5B5FEF]/10 transition-colors whitespace-nowrap"
-                                                    >
-                                                        {bill.status === "Active" ? (
-                                                            <><Pause className="w-3 h-3" /> Pause</>
-                                                        ) : (
-                                                            <><Play className="w-3 h-3" /> Resume</>
-                                                        )}
-                                                    </button>
-                                                )}
-                                                <button className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors">
-                                                    <MoreHorizontal className="w-4 h-4" />
+                                            {/* Actions */}
+                                            <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex items-center gap-1">
+                                                    {bill.status !== "Ended" && (
+                                                        <button
+                                                            onClick={() => toggleStatus(bill)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:text-zinc-950 border border-zinc-200 hover:border-zinc-300 bg-white rounded-lg transition-all shadow-sm active:scale-95"
+                                                        >
+                                                            {bill.status === "Active" ? (
+                                                                <><Pause className="w-3 h-3 text-zinc-400" /> Pause</>
+                                                            ) : (
+                                                                <><Play className="w-3 h-3 text-zinc-400" /> Resume</>
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+
+                                {filtered.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Receipt className="w-6 h-6 text-zinc-200" />
+                                                <p className="text-[13px] text-zinc-400">No templates match your filters.</p>
+                                                <button
+                                                    onClick={() => {
+                                                        setSearchQuery("");
+                                                        setSelectedStatus("All");
+                                                    }}
+                                                    className="text-[12px] text-[#5B5FEF] hover:underline mt-1"
+                                                >
+                                                    Clear filters
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
-                                );
-                            })}
-
-                            {filtered.length === 0 && (
-                                <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Receipt className="w-6 h-6 text-zinc-200" />
-                                            <p className="text-[13px] text-zinc-400">No recurring bills match your filters.</p>
-                                            <button
-                                                onClick={() => {
-                                                    setSearchQuery("");
-                                                    setSelectedCategory("All");
-                                                    setSelectedStatus("All");
-                                                }}
-                                                className="text-[12px] text-[#5B5FEF] hover:underline mt-1"
-                                            >
-                                                Clear filters
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
                     {/* Footer */}
                     {filtered.length > 0 && (
                         <div className="px-6 py-3 border-t border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
                             <span className="text-[12px] text-zinc-400">
-                                {filtered.length} bill{filtered.length !== 1 ? "s" : ""}
+                                {filtered.length} template{filtered.length !== 1 ? "s" : ""}
                             </span>
                             <span className="text-[13px] font-semibold text-zinc-900 tabular-nums font-mono">
                                 Monthly payable: {fmt(Math.round(filteredMonthlyPayable))}
@@ -796,9 +536,206 @@ export default function RecurringBills() {
                 </div>
             </div>
 
-            {showModal && (
-                <CreateBillModal onClose={() => setShowModal(false)} onAdd={handleAdd} />
+            {/* Viewer Details Modal */}
+            {selectedBill && (
+                <RecurringBillDetailsModal
+                    bill={selectedBill}
+                    onClose={() => setSelectedBill(null)}
+                    onDeleteSuccess={handleDeleteSuccess}
+                />
             )}
+
+            {/* Loading Spinner */}
+            {loading && (
+                <div className="fixed inset-0 bg-[#FAFAFA]/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-2">
+                        <RefreshCw className="w-6 h-6 text-zinc-500 animate-spin" />
+                        <p className="text-[13px] text-zinc-500">Loading templates...</p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Recurring Bill Details Modal
+// ---------------------------------------------------------------------------
+interface DetailsModalProps {
+    bill: RecurringBill;
+    onClose: () => void;
+    onDeleteSuccess: () => void;
+}
+
+function RecurringBillDetailsModal({ bill, onClose, onDeleteSuccess }: DetailsModalProps) {
+    const [deleting, setDeleting] = useState(false);
+    const rawDetails = bill.other_details || {};
+    const items = rawDetails.items || [];
+
+    const handleDelete = async () => {
+        if (!confirm("Are you sure you want to delete this recurring bill template?")) return;
+        setDeleting(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`http://localhost:8888/api/recurring-bills/${bill.id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                onDeleteSuccess();
+            } else {
+                alert(data.message || "Failed to delete template");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error deleting template");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border border-zinc-200 rounded-2xl shadow-2xl w-full max-w-[800px] my-8 overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 flex-shrink-0">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-[16px] font-bold text-zinc-900">Recurring Bill Template</h3>
+                            <span className="font-mono text-xs text-zinc-500">#{bill.id}</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">Status: {bill.status}</p>
+                    </div>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-6 overflow-y-auto flex-grow">
+                    {/* Metadata Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                        <div>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Vendor</p>
+                            <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{bill.vendor}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Profile Name</p>
+                            <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{bill.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Repeat Every</p>
+                            <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{bill.frequency}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Start Date</p>
+                            <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{bill.startDate || "—"}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Ends On</p>
+                            <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{rawDetails.never_expires ? "Never Expires" : (rawDetails.end_date || "—")}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">A/P Account</p>
+                            <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{rawDetails.ap_account || "Accounts Payable"}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Payment Terms</p>
+                            <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{bill.paymentTerms || "Due on Receipt"}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Reverse Charge</p>
+                            <p className="text-[13px] font-semibold text-zinc-800 mt-0.5">{rawDetails.reverse_charge ? "Yes" : "No"}</p>
+                        </div>
+                    </div>
+
+                    {/* Items Table */}
+                    <div>
+                        <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Line Items Table</h4>
+                        <div className="border border-zinc-200 rounded-xl overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead>
+                                    <tr className="border-b border-zinc-200 bg-zinc-50/50">
+                                        <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500">Details</th>
+                                        <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-32">Account</th>
+                                        <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-16 text-right">Qty</th>
+                                        <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-24 text-right">Rate</th>
+                                        <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-20 text-center">Tax</th>
+                                        <th className="px-4 py-2 font-bold uppercase text-[10px] tracking-wider text-zinc-500 w-28 text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-100">
+                                    {items.map((item: any, i: number) => (
+                                        <tr key={i} className="hover:bg-zinc-50/20">
+                                            <td className="px-4 py-2 text-[13px] text-zinc-800 font-medium">{item.description}</td>
+                                            <td className="px-4 py-2 text-[13px] text-zinc-600">{item.account || "—"}</td>
+                                            <td className="px-4 py-2 text-[13px] text-zinc-600 font-mono text-right tabular-nums">{parseFloat(item.quantity).toFixed(2)}</td>
+                                            <td className="px-4 py-2 text-[13px] text-zinc-600 font-mono text-right tabular-nums">₹{parseFloat(item.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                            <td className="px-4 py-2 text-[13px] text-zinc-600 text-center">{item.tax_rate}%</td>
+                                            <td className="px-4 py-2 text-[13px] font-semibold text-zinc-800 font-mono text-right tabular-nums">₹{parseFloat(item.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                        </tr>
+                                    ))}
+                                    {items.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="px-4 py-6 text-center text-xs text-zinc-400 italic">No line items mapped.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Pricing Summary */}
+                    <div className="flex justify-end pt-2">
+                        <div className="w-64 bg-zinc-50 p-4 border border-zinc-100 rounded-xl space-y-2 text-xs">
+                            <div className="flex justify-between text-zinc-500">
+                                <span>Sub Total</span>
+                                <span className="font-mono">₹{parseFloat(bill.amount as any).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-zinc-500">
+                                <span>Discount ({rawDetails.discount_val || "0"}{rawDetails.discount_type || "%"})</span>
+                                <span className="font-mono">- ₹{(rawDetails.discount_type === "%" ? (parseFloat(bill.amount as any) * (parseFloat(rawDetails.discount_val) || 0)) / 100 : (parseFloat(rawDetails.discount_val) || 0)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-zinc-500">
+                                <span>TDS ({rawDetails.tds_rate || "0"}%)</span>
+                                <span className="font-mono">- ₹{((parseFloat(bill.amount as any) * (parseFloat(rawDetails.tds_rate) || 0)) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-zinc-500">
+                                <span>Adjustment</span>
+                                <span className="font-mono">₹{parseFloat(rawDetails.adjustment || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-zinc-900 border-t border-zinc-200 pt-2 text-sm">
+                                <span>Grand Total</span>
+                                <span className="font-mono text-[#5B5FEF]">₹{parseFloat(bill.amount as any).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                        <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Notes</h4>
+                        <div className="p-3 bg-zinc-50 rounded-lg text-xs text-zinc-600 border border-zinc-100 min-h-[60px] whitespace-pre-wrap">
+                            {rawDetails.notes || "—"}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-zinc-100 bg-zinc-50 flex items-center justify-between flex-shrink-0">
+                    <button
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                    >
+                        {deleting ? "Deleting..." : "Delete Template"}
+                    </button>
+                    
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-xs font-bold text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

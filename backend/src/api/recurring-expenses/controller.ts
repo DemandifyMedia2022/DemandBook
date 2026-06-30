@@ -12,7 +12,7 @@ export const list = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const { merchant, category, amount, frequency, next_date, is_active } = req.body;
+  const { merchant, category, amount, frequency, next_date, is_active, other_details } = req.body;
 
   if (!merchant || !category || !amount || !frequency || !next_date) {
     return res.status(400).json({ success: false, message: 'Merchant, Category, Amount, Frequency, and Next Date are required.' });
@@ -20,8 +20,8 @@ export const create = async (req: Request, res: Response) => {
 
   try {
     const result = await query(`
-      INSERT INTO recurring_expenses (merchant, category, amount, frequency, next_date, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO recurring_expenses (merchant, category, amount, frequency, next_date, is_active, other_details)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *;
     `, [
       merchant,
@@ -29,7 +29,8 @@ export const create = async (req: Request, res: Response) => {
       amount,
       frequency,
       next_date,
-      is_active !== undefined ? is_active : true
+      is_active !== undefined ? is_active : true,
+      other_details ? JSON.stringify(other_details) : null
     ]);
     return res.status(201).json({ success: true, recurringExpense: result.rows[0] });
   } catch (error) {
@@ -40,13 +41,13 @@ export const create = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { merchant, category, amount, frequency, next_date, is_active } = req.body;
+  const { merchant, category, amount, frequency, next_date, is_active, other_details } = req.body;
 
   try {
     const result = await query(`
       UPDATE recurring_expenses
-      SET merchant = $1, category = $2, amount = $3, frequency = $4, next_date = $5, is_active = $6, updated_at = NOW()
-      WHERE id = $7
+      SET merchant = $1, category = $2, amount = $3, frequency = $4, next_date = $5, is_active = $6, other_details = $7, updated_at = NOW()
+      WHERE id = $8
       RETURNING *;
     `, [
       merchant,
@@ -55,6 +56,7 @@ export const update = async (req: Request, res: Response) => {
       frequency,
       next_date,
       is_active !== undefined ? is_active : true,
+      other_details ? JSON.stringify(other_details) : null,
       id
     ]);
 
