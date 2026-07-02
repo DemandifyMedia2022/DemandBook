@@ -4,7 +4,7 @@ import { authMiddleware } from '../../middlewares/auth';
 
 const router = Router();
 
-router.use(authMiddleware); // Protect all product endpoints
+router.use(authMiddleware); // Protect all inventory endpoints
 
 router.get('/list', list);
 router.post('/create', create);

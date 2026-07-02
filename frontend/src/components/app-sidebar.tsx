@@ -53,14 +53,14 @@ const navItems: NavItem[] = [
     label: "Items",
     icon: Package,
     subItems: [
-      { label: "Products", href: "/products" },
+      { label: "Items", href: "/products" },
     ]
   },
   {
     label: "Inventory",
     icon: Layers,
     subItems: [
-      { label: "Inventory", href: "/inventory" },
+      { label: "Inventory Adjustments", href: "/inventory" },
     ]
   },
   {
@@ -157,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      
+
       <SidebarContent>
         {/* Quick Action Group from Dashboard block styles */}
         <SidebarGroup>

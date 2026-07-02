@@ -18,7 +18,20 @@ export const list = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const { custom_id, client_id, bill_id, payment_date, payment_method, amount_paid, reference_number, notes } = req.body;
+  const { 
+    custom_id, 
+    client_id, 
+    bill_id, 
+    payment_date, 
+    payment_method, 
+    amount_paid, 
+    reference_number, 
+    notes,
+    paid_through,
+    amount_refunded,
+    attachments,
+    bill_allocations
+  } = req.body;
 
   if (!custom_id || !client_id || !amount_paid || !payment_method) {
     return res.status(400).json({ success: false, message: 'Payment Custom ID, Client ID, Amount Paid, and Payment Method are required.' });
@@ -29,24 +42,38 @@ export const create = async (req: Request, res: Response) => {
     const dbClient = await client;
     await dbClient.query('BEGIN');
 
-    // Update bill status if bill_id is provided
+    // 1. Update bill status for single bill_id if provided
     if (bill_id) {
-      const billRes = await dbClient.query('SELECT amount, status FROM bills WHERE id = $1', [bill_id]);
-      if (billRes.rows.length > 0) {
-        // Mark as Paid
+      await dbClient.query(`
+        UPDATE bills
+        SET status = 'Paid', cleared_date = $1
+        WHERE id = $2
+      `, [payment_date || new Date().toISOString().split('T')[0], bill_id]);
+    }
+
+    // 2. Also update status for all bills specified in bill_allocations map
+    if (bill_allocations && typeof bill_allocations === 'object') {
+      const allocatedBillIds = Object.keys(bill_allocations).map(Number).filter(id => !isNaN(id) && bill_allocations[id] > 0);
+      if (allocatedBillIds.length > 0) {
         await dbClient.query(`
           UPDATE bills
           SET status = 'Paid', cleared_date = $1
-          WHERE id = $2
-        `, [payment_date || new Date().toISOString().split('T')[0], bill_id]);
+          WHERE id = ANY($2::int[])
+        `, [payment_date || new Date().toISOString().split('T')[0], allocatedBillIds]);
       }
     }
 
+    // 3. Insert payment made record with all fields
     const insertQuery = `
-      INSERT INTO payments_made (custom_id, client_id, bill_id, payment_date, payment_method, amount_paid, reference_number, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO payments_made (
+        custom_id, client_id, bill_id, payment_date, payment_method, 
+        amount_paid, reference_number, notes, paid_through, 
+        amount_refunded, attachments, bill_allocations
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *;
     `;
+    
     const result = await dbClient.query(insertQuery, [
       custom_id,
       client_id,
@@ -55,7 +82,11 @@ export const create = async (req: Request, res: Response) => {
       payment_method,
       amount_paid,
       reference_number || '',
-      notes || ''
+      notes || '',
+      paid_through || 'HDFC Bank Account',
+      amount_refunded || 0.00,
+      JSON.stringify(attachments || []),
+      JSON.stringify(bill_allocations || {})
     ]);
 
     await dbClient.query('COMMIT');

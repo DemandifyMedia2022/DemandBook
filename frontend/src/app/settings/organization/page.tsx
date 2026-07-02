@@ -116,7 +116,7 @@ export default function OrganizationProfile() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        
+
         {/* Profile Details */}
         <SectionCard title="Organization Details" subtitle="Basic details of your organization">
           <div className="space-y-6">
@@ -131,8 +131,8 @@ export default function OrganizationProfile() {
                   </>
                 )}
                 {/* Simulated file input - in reality this would upload to S3/backend and set logo_url */}
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="logo_url"
                   value={formData.logo_url}
                   onChange={handleChange}
@@ -145,7 +145,7 @@ export default function OrganizationProfile() {
                   This logo will be displayed in transaction PDFs and email notifications.
                 </p>
                 <p className="text-label-sm text-muted-foreground font-mono">
-                  Preferred Image Dimensions: 240 x 240 pixels @ 72 DPI<br/>
+                  Preferred Image Dimensions: 240 x 240 pixels @ 72 DPI<br />
                   Maximum File Size: 1MB
                 </p>
                 <div className="mt-2">
@@ -186,11 +186,11 @@ export default function OrganizationProfile() {
                 <input type="text" name="address_street" value={formData.address_street || ''} onChange={handleChange} className={inputCls} placeholder="Street 1, Office Number" />
               </FormField>
             </div>
-            
+
             <FormField label="City">
               <input type="text" name="address_city" value={formData.address_city || ''} onChange={handleChange} className={inputCls} />
             </FormField>
-            
+
             <FormField label="State / Province">
               <input type="text" name="address_state" value={formData.address_state || ''} onChange={handleChange} className={inputCls} />
             </FormField>
@@ -218,11 +218,11 @@ export default function OrganizationProfile() {
             </div>
 
             <div className="md:col-span-2 flex items-center gap-3 pt-2">
-              <input 
-                type="checkbox" 
-                id="different_payment_address" 
-                name="different_payment_address" 
-                checked={formData.different_payment_address} 
+              <input
+                type="checkbox"
+                id="different_payment_address"
+                name="different_payment_address"
+                checked={formData.different_payment_address}
                 onChange={handleChange}
                 className="w-5 h-5 text-primary rounded border-border focus:ring-primary"
               />
@@ -307,14 +307,14 @@ export default function OrganizationProfile() {
         {/* Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40">
           <div className="max-w-[900px] mx-auto flex justify-end gap-4">
-            <Link 
+            <Link
               href="/settings"
               className="px-6 py-2 border border-border rounded-full text-label-lg font-bold text-muted-foreground hover:bg-card-container transition-colors"
             >
               Cancel
             </Link>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={saving}
               className="px-6 py-2 bg-primary text-primary-foreground rounded-full text-label-lg font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
             >

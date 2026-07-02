@@ -18,6 +18,7 @@ import paymentRoutes from './api/payments/routes';
 import productRoutes from './api/products/routes';
 import adminRoutes from './api/admins/routes';
 import organizationRoutes from './api/settings/organization/routes';
+import inventoryRoutes from './api/inventory/routes';
 
 import quotesRoutes from './api/quotes/routes';
 import salesOrdersRoutes from './api/sales-orders/routes';
@@ -91,6 +92,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings/organization', organizationRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 app.use('/api/quotes', quotesRoutes);
 app.use('/api/sales-orders', salesOrdersRoutes);

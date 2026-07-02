@@ -17,16 +17,43 @@ export const list = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const { credit_number, client_id, bill_id, date, amount, balance, status, reason } = req.body;
+  const {
+    credit_number,
+    client_id,
+    bill_id,
+    date,
+    amount,
+    balance,
+    status,
+    reason,
+    order_number,
+    subject,
+    accounts_payable,
+    reverse_charge,
+    items,
+    sub_total,
+    discount_pct,
+    discount_amount,
+    tds,
+    tcs,
+    adjustment,
+    total,
+    notes,
+    attachments
+  } = req.body;
 
-  if (!credit_number || !client_id || !amount) {
+  if (!credit_number || !client_id || amount === undefined) {
     return res.status(400).json({ success: false, message: 'Credit Number, Vendor ID (client_id), and Amount are required.' });
   }
 
   try {
     const result = await query(`
-      INSERT INTO vendor_credits (credit_number, client_id, bill_id, date, amount, balance, status, reason)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO vendor_credits (
+        credit_number, client_id, bill_id, date, amount, balance, status, reason,
+        order_number, subject, accounts_payable, reverse_charge, items, sub_total,
+        discount_pct, discount_amount, tds, tcs, adjustment, total, notes, attachments
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
       RETURNING *;
     `, [
       credit_number,
@@ -35,8 +62,22 @@ export const create = async (req: Request, res: Response) => {
       date || new Date(),
       amount,
       balance !== undefined ? balance : amount,
-      status || 'Draft',
-      reason || ''
+      status || 'Open',
+      reason || '',
+      order_number || '',
+      subject || '',
+      accounts_payable || 'Accounts Payable',
+      reverse_charge || false,
+      JSON.stringify(items || []),
+      sub_total || 0.00,
+      discount_pct || 0.00,
+      discount_amount || 0.00,
+      tds || '',
+      tcs || '',
+      adjustment || 0.00,
+      total || 0.00,
+      notes || '',
+      JSON.stringify(attachments || [])
     ]);
     return res.status(201).json({ success: true, vendorCredit: result.rows[0] });
   } catch (error) {
@@ -69,13 +110,39 @@ export const getDetails = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { credit_number, client_id, bill_id, date, amount, balance, status, reason } = req.body;
+  const {
+    credit_number,
+    client_id,
+    bill_id,
+    date,
+    amount,
+    balance,
+    status,
+    reason,
+    order_number,
+    subject,
+    accounts_payable,
+    reverse_charge,
+    items,
+    sub_total,
+    discount_pct,
+    discount_amount,
+    tds,
+    tcs,
+    adjustment,
+    total,
+    notes,
+    attachments
+  } = req.body;
 
   try {
     const result = await query(`
       UPDATE vendor_credits
-      SET credit_number = $1, client_id = $2, bill_id = $3, date = $4, amount = $5, balance = $6, status = $7, reason = $8, updated_at = NOW()
-      WHERE id = $9
+      SET credit_number = $1, client_id = $2, bill_id = $3, date = $4, amount = $5, balance = $6, status = $7, reason = $8,
+          order_number = $9, subject = $10, accounts_payable = $11, reverse_charge = $12, items = $13, sub_total = $14,
+          discount_pct = $15, discount_amount = $16, tds = $17, tcs = $18, adjustment = $19, total = $20, notes = $21,
+          attachments = $22, updated_at = NOW()
+      WHERE id = $23
       RETURNING *;
     `, [
       credit_number,
@@ -84,8 +151,22 @@ export const update = async (req: Request, res: Response) => {
       date,
       amount,
       balance,
-      status || 'Draft',
+      status || 'Open',
       reason || '',
+      order_number || '',
+      subject || '',
+      accounts_payable || 'Accounts Payable',
+      reverse_charge || false,
+      JSON.stringify(items || []),
+      sub_total || 0.00,
+      discount_pct || 0.00,
+      discount_amount || 0.00,
+      tds || '',
+      tcs || '',
+      adjustment || 0.00,
+      total || 0.00,
+      notes || '',
+      JSON.stringify(attachments || []),
       id
     ]);
 
