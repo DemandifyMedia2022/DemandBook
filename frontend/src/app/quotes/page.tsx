@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
     Search,
@@ -28,25 +28,39 @@ type QuoteStatus = "Draft" | "Sent" | "Accepted" | "Declined" | "Expired";
 interface LineItem {
     id: string;
     description: string;
+    hsnSac: string;          // HSN/SAC code, required for GST docs
     qty: number;
     unitPrice: number;
-    taxPct: number;
+    discountPct: number;     // per-line discount
+    taxPct: number;          // combined GST % (we'll split into CGST/SGST or IGST at calc time)
 }
 
 interface Quote {
     id: string;
     quoteNo: string;
-    customer: string;
+    customerId: string;      // FK to Customer — replaces free-text `customer`
+    customer: string;        // denormalized display name, kept in sync with customerId
+    billingAddress: string;
+    shippingAddress: string;
+    placeOfSupply: string;   // state code, drives CGST+SGST vs IGST
     subject: string;
+    referenceNumber?: string;
+    salesperson?: string;
     quoteDate: string;
     quoteDateLabel: string;
     expiryDate: string;
     expiryDateLabel: string;
+    currency: string;
     lineItems: LineItem[];
-    discountPct: number;
+    discountPct: number;     // overall discount, applied after line-level discounts
+    shippingCharges: number;
+    roundOff: number;
+    amount?: number;         // backend-calculated total, used when lineItems aren't loaded (e.g. list view)
     notes?: string;
     terms?: string;
     status: QuoteStatus;
+    convertedToInvoiceId?: string; // tracks quote → invoice lifecycle
+    attachments?: string[];        // file names/URLs for now
 }
 
 // ---------------------------------------------------------------------------
@@ -64,6 +78,7 @@ const STATUS_CONFIG: Record<
 };
 
 const STATUSES: QuoteStatus[] = ["Draft", "Sent", "Accepted", "Declined", "Expired"];
+
 const DATE_RANGES = ["This Month", "Last Month", "This Quarter", "This Year", "All Time"];
 
 // ---------------------------------------------------------------------------
@@ -93,76 +108,127 @@ function makeExpiryDate(daysFromNow: number) {
     };
 }
 
-function calcTotal(lineItems: LineItem[], discountPct: number): number {
-    const subtotal = lineItems.reduce(
-        (s, l) => s + l.qty * l.unitPrice * (1 + l.taxPct / 100), 0,
-    );
-    return subtotal * (1 - discountPct / 100);
+function calcLineAmount(l: LineItem): number {
+    const base = l.qty * l.unitPrice;
+    const afterLineDiscount = base * (1 - l.discountPct / 100);
+    return afterLineDiscount * (1 + l.taxPct / 100);
 }
 
+function calcTotal(
+    lineItems: LineItem[],
+    discountPct: number,
+    shippingCharges = 0,
+    roundOff = 0,
+    backendAmount?: number,
+): number {
+    if (backendAmount !== undefined) return backendAmount;
+    const subtotal = lineItems.reduce((s, l) => s + calcLineAmount(l), 0);
+    const afterOverallDiscount = subtotal * (1 - discountPct / 100);
+    return afterOverallDiscount + shippingCharges + roundOff;
+}
 const initialQuotes: Quote[] = [
     {
         id: "Q-001", quoteNo: "QUO-2024-001",
-        customer: "Infosys Ltd.", subject: "Annual SaaS Subscription — Nexa Workspace",
+        customerId: "CUST-1001", customer: "Infosys Ltd.",
+        billingAddress: "Electronics City, Bengaluru 560100",
+        shippingAddress: "Electronics City, Bengaluru 560100",
+        placeOfSupply: "29-Karnataka",
+        subject: "Annual SaaS Subscription — Nexa Workspace",
+        referenceNumber: "PO-INFY-8821",
+        salesperson: "Aarav Shah",
         ...makeQuoteDate(5), ...makeExpiryDate(25),
+        currency: "INR",
         lineItems: [
-            { id: "l1", description: "Nexa Workspace — Enterprise (50 seats)", qty: 50, unitPrice: 2400, taxPct: 18 },
-            { id: "l2", description: "Onboarding & Setup", qty: 1, unitPrice: 25000, taxPct: 18 },
+            { id: "l1", description: "Nexa Workspace — Enterprise (50 seats)", hsnSac: "998314", qty: 50, unitPrice: 2400, discountPct: 0, taxPct: 18 },
+            { id: "l2", description: "Onboarding & Setup", hsnSac: "998313", qty: 1, unitPrice: 25000, discountPct: 0, taxPct: 18 },
         ],
-        discountPct: 10, status: "Sent",
+        discountPct: 10, shippingCharges: 0, roundOff: 0, status: "Sent",
         notes: "Pricing valid for 30 days from issue date.",
         terms: "Payment due within 30 days of invoice.",
     },
     {
         id: "Q-002", quoteNo: "QUO-2024-002",
-        customer: "Wipro Technologies", subject: "CRM Module Implementation",
+        customerId: "CUST-1002", customer: "Wipro Technologies",
+        billingAddress: "Sarjapur Road, Bengaluru 560035",
+        shippingAddress: "Sarjapur Road, Bengaluru 560035",
+        placeOfSupply: "29-Karnataka",
+        subject: "CRM Module Implementation",
+        referenceNumber: "PO-WIPRO-4471",
+        salesperson: "Aarav Shah",
         ...makeQuoteDate(12), ...makeExpiryDate(18),
+        currency: "INR",
         lineItems: [
-            { id: "l1", description: "CRM Module License (100 seats)", qty: 100, unitPrice: 1800, taxPct: 18 },
-            { id: "l2", description: "Custom Integration — Salesforce", qty: 1, unitPrice: 85000, taxPct: 18 },
-            { id: "l3", description: "Training Sessions (10 hrs)", qty: 10, unitPrice: 5000, taxPct: 18 },
+            { id: "l1", description: "CRM Module License (100 seats)", hsnSac: "998314", qty: 100, unitPrice: 1800, discountPct: 0, taxPct: 18 },
+            { id: "l2", description: "Custom Integration — Salesforce", hsnSac: "998313", qty: 1, unitPrice: 85000, discountPct: 0, taxPct: 18 },
+            { id: "l3", description: "Training Sessions (10 hrs)", hsnSac: "999293", qty: 10, unitPrice: 5000, discountPct: 0, taxPct: 18 },
         ],
-        discountPct: 5, status: "Accepted",
+        discountPct: 5, shippingCharges: 0, roundOff: 0, status: "Accepted",
         notes: "Includes 1 year of support.",
     },
     {
         id: "Q-003", quoteNo: "QUO-2024-003",
-        customer: "TCS Digital", subject: "HR & Payroll Module — Pilot",
+        customerId: "CUST-1003", customer: "TCS Digital",
+        billingAddress: "Hinjewadi, Pune 411057",
+        shippingAddress: "Hinjewadi, Pune 411057",
+        placeOfSupply: "27-Maharashtra",
+        subject: "HR & Payroll Module — Pilot",
+        salesperson: "Priya Nair",
         ...makeQuoteDate(2), ...makeExpiryDate(28),
+        currency: "INR",
         lineItems: [
-            { id: "l1", description: "HR Module License (25 seats)", qty: 25, unitPrice: 1200, taxPct: 18 },
+            { id: "l1", description: "HR Module License (25 seats)", hsnSac: "998314", qty: 25, unitPrice: 1200, discountPct: 0, taxPct: 18 },
         ],
-        discountPct: 0, status: "Draft",
+        discountPct: 0, shippingCharges: 0, roundOff: 0, status: "Draft",
     },
     {
         id: "Q-004", quoteNo: "QUO-2024-004",
-        customer: "HCL Technologies", subject: "Mail & Calendar Suite",
+        customerId: "CUST-1004", customer: "HCL Technologies",
+        billingAddress: "Sector 126, Noida 201304",
+        shippingAddress: "Sector 126, Noida 201304",
+        placeOfSupply: "09-Uttar Pradesh",
+        subject: "Mail & Calendar Suite",
+        referenceNumber: "PO-HCL-2290",
+        salesperson: "Priya Nair",
         ...makeQuoteDate(20), ...makeExpiryDate(5),
+        currency: "INR",
         lineItems: [
-            { id: "l1", description: "Mail & Calendar — Business (200 seats)", qty: 200, unitPrice: 800, taxPct: 18 },
+            { id: "l1", description: "Mail & Calendar — Business (200 seats)", hsnSac: "998314", qty: 200, unitPrice: 800, discountPct: 0, taxPct: 18 },
         ],
-        discountPct: 15, status: "Sent",
+        discountPct: 15, shippingCharges: 0, roundOff: 0, status: "Sent",
         notes: "Expiring soon — follow up required.",
     },
     {
         id: "Q-005", quoteNo: "QUO-2024-005",
-        customer: "Tech Mahindra", subject: "Vault Security Module",
+        customerId: "CUST-1005", customer: "Tech Mahindra",
+        billingAddress: "Magarpatta, Pune 411013",
+        shippingAddress: "Magarpatta, Pune 411013",
+        placeOfSupply: "27-Maharashtra",
+        subject: "Vault Security Module",
+        salesperson: "Aarav Shah",
         ...makeQuoteDate(35), ...makeExpiryDate(-5),
+        currency: "INR",
         lineItems: [
-            { id: "l1", description: "Vault Module License (50 seats)", qty: 50, unitPrice: 1500, taxPct: 18 },
-            { id: "l2", description: "Security Audit & Setup", qty: 1, unitPrice: 40000, taxPct: 18 },
+            { id: "l1", description: "Vault Module License (50 seats)", hsnSac: "998314", qty: 50, unitPrice: 1500, discountPct: 0, taxPct: 18 },
+            { id: "l2", description: "Security Audit & Setup", hsnSac: "998313", qty: 1, unitPrice: 40000, discountPct: 0, taxPct: 18 },
         ],
-        discountPct: 0, status: "Expired",
+        discountPct: 0, shippingCharges: 0, roundOff: 0, status: "Expired",
     },
     {
         id: "Q-006", quoteNo: "QUO-2024-006",
-        customer: "Mphasis Ltd.", subject: "Full Nexa Platform — Enterprise",
+        customerId: "CUST-1006", customer: "Mphasis Ltd.",
+        billingAddress: "Airoli, Navi Mumbai 400708",
+        shippingAddress: "Airoli, Navi Mumbai 400708",
+        placeOfSupply: "27-Maharashtra",
+        subject: "Full Nexa Platform — Enterprise",
+        referenceNumber: "PO-MPH-5567",
+        salesperson: "Priya Nair",
         ...makeQuoteDate(40), ...makeExpiryDate(-10),
+        currency: "INR",
         lineItems: [
-            { id: "l1", description: "Nexa Platform — Full Suite (500 seats)", qty: 500, unitPrice: 3200, taxPct: 18 },
-            { id: "l2", description: "Dedicated Support (12 months)", qty: 12, unitPrice: 15000, taxPct: 18 },
+            { id: "l1", description: "Nexa Platform — Full Suite (500 seats)", hsnSac: "998314", qty: 500, unitPrice: 3200, discountPct: 0, taxPct: 18 },
+            { id: "l2", description: "Dedicated Support (12 months)", hsnSac: "998313", qty: 12, unitPrice: 15000, discountPct: 0, taxPct: 18 },
         ],
-        discountPct: 20, status: "Declined",
+        discountPct: 20, shippingCharges: 0, roundOff: 0, status: "Declined",
         notes: "Customer went with a competitor.",
     },
 ];
@@ -205,7 +271,15 @@ function isInRange(isoDate: string, range: string): boolean {
 }
 
 function newLineItem(): LineItem {
-    return { id: crypto.randomUUID(), description: "", qty: 1, unitPrice: 0, taxPct: 18 };
+    return {
+        id: crypto.randomUUID(),
+        description: "",
+        hsnSac: "",
+        qty: 1,
+        unitPrice: 0,
+        discountPct: 0,
+        taxPct: 18,
+    };
 }
 
 function exportCSV(quotes: Quote[]) {
@@ -273,19 +347,61 @@ function CreateQuoteModal({ onClose, onAdd }: {
     onClose: () => void;
     onAdd: (q: Quote) => void;
 }) {
+    const [customerId, setCustomerId] = useState("");
     const [customer, setCustomer] = useState("");
+    const [billingAddress, setBillingAddress] = useState("");
+    const [shippingAddress, setShippingAddress] = useState("");
+    const [placeOfSupply, setPlaceOfSupply] = useState("");
     const [subject, setSubject] = useState("");
+    const [referenceNumber, setReferenceNumber] = useState("");
+    const [salesperson, setSalesperson] = useState("");
     const [quoteDate, setQuoteDate] = useState("");
     const [expiryDate, setExpiryDate] = useState("");
+    const [currency, setCurrency] = useState("INR");
     const [discountPct, setDiscountPct] = useState("0");
+    const [shippingCharges, setShippingCharges] = useState("0");
+    const [roundOff, setRoundOff] = useState("0");
     const [notes, setNotes] = useState("");
     const [terms, setTerms] = useState("");
     const [lineItems, setLineItems] = useState<LineItem[]>([newLineItem()]);
 
-    const subtotal = lineItems.reduce((s, l) => s + l.qty * l.unitPrice, 0);
-    const tax = lineItems.reduce((s, l) => s + l.qty * l.unitPrice * (l.taxPct / 100), 0);
+    const [attachments, setAttachments] = useState<File[]>([]);
+
+    const [realCustomers, setRealCustomers] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const res = await fetch("http://localhost:8888/api/client/list?type=customer", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                console.log("Customers API response:", data); // temporary - so we can see the real shape
+                if (data.success) {
+                    setRealCustomers(data.clients || data.customers || []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch customers:", error);
+            }
+        };
+        fetchCustomers();
+    }, []);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    const handleRemoveFile = (index: number) => {
+        setAttachments((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const subtotal = lineItems.reduce((s, l) => s + l.qty * l.unitPrice * (1 - l.discountPct / 100), 0);
+    const tax = lineItems.reduce((s, l) => s + l.qty * l.unitPrice * (1 - l.discountPct / 100) * (l.taxPct / 100), 0);
     const discount = (subtotal + tax) * (parseFloat(discountPct || "0") / 100);
-    const total = subtotal + tax - discount;
+    const total = subtotal + tax - discount + parseFloat(shippingCharges || "0") + parseFloat(roundOff || "0");
 
     const updateItem = (id: string, field: keyof LineItem, value: string | number) => {
         setLineItems(lineItems.map((l) => l.id === id ? { ...l, [field]: value } : l));
@@ -293,25 +409,94 @@ function CreateQuoteModal({ onClose, onAdd }: {
     const removeItem = (id: string) => setLineItems(lineItems.filter((l) => l.id !== id));
     const addItem = () => setLineItems([...lineItems, newLineItem()]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!customer || !subject) return;
+        if (!customerId || !subject) return;
+        setSubmitting(true);
+
         const qDateObj = quoteDate ? new Date(quoteDate) : today;
         const expDateObj = expiryDate ? new Date(expiryDate) : new Date(today.getTime() + 30 * 864e5);
-        onAdd({
-            id: `Q-${String(Math.floor(Math.random() * 900) + 100)}`,
-            quoteNo: `QUO-2024-${String(Math.floor(Math.random() * 900) + 100)}`,
-            customer, subject,
-            quoteDate: qDateObj.toISOString(),
-            quoteDateLabel: qDateObj.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
-            expiryDate: expDateObj.toISOString(),
-            expiryDateLabel: expDateObj.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
-            lineItems,
-            discountPct: parseFloat(discountPct || "0"),
-            notes: notes || undefined,
-            terms: terms || undefined,
+
+        // Build the payload to match the backend's expected snake_case fields
+        const payload = {
+            client_id: customerId,
+            subject,
+            reference_number: referenceNumber || undefined,
+            sales_person_id: undefined, // TODO: wire to a real user picker later; backend defaults to null
+            billing_address: billingAddress,
+            shipping_address: shippingAddress || billingAddress,
+            place_of_supply: placeOfSupply,
+            quote_date: qDateObj.toISOString().split("T")[0],
+            expiry_date: expDateObj.toISOString().split("T")[0],
+            currency,
+            shipping_charges: parseFloat(shippingCharges || "0"),
+            round_off: parseFloat(roundOff || "0"),
+            discount_total: 0, // overall discount is recalculated server-side from items + discountPct below
             status: "Draft",
-        });
+            customer_notes: notes || undefined,
+            terms_conditions: terms || undefined,
+            items: lineItems.map((l) => ({
+                description: l.description,
+                hsn_sac: l.hsnSac,
+                quantity: l.qty,
+                unit: "pcs",
+                rate: l.unitPrice,
+                discount_pct: l.discountPct,
+                tax_rate: l.taxPct,
+            })),
+        };
+
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch("http://localhost:8888/api/quotes", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                // Map the backend's response shape back into the frontend's Quote type
+                const q = data.quote;
+                onAdd({
+                    id: String(q.id),
+                    quoteNo: q.quote_number,
+                    customerId: String(q.client_id),
+                    customer: q.customer_name || customer,
+                    billingAddress: q.billing_address || "",
+                    shippingAddress: q.shipping_address || "",
+                    placeOfSupply: q.place_of_supply || "",
+                    subject: q.subject || "",
+                    referenceNumber: q.reference_number || undefined,
+                    salesperson: salesperson || undefined,
+                    quoteDate: q.quote_date,
+                    quoteDateLabel: new Date(q.quote_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
+                    expiryDate: q.expiry_date,
+                    expiryDateLabel: q.expiry_date ? new Date(q.expiry_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "",
+                    currency: q.currency,
+                    lineItems,
+                    discountPct: parseFloat(discountPct || "0"),
+                    shippingCharges: parseFloat(q.shipping_charges || "0"),
+                    roundOff: parseFloat(q.round_off || "0"),
+                    notes: q.customer_notes || undefined,
+                    terms: q.terms_conditions || undefined,
+                    status: q.status,
+                    attachments: attachments.length > 0 ? attachments.map((f) => f.name) : undefined,
+                });
+            } else {
+                alert("Failed to create quote: " + data.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error creating quote");
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -333,11 +518,69 @@ function CreateQuoteModal({ onClose, onAdd }: {
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Customer</label>
-                            <input required placeholder="e.g. Infosys Ltd." className={FIELD} value={customer} onChange={(e) => setCustomer(e.target.value)} />
+                            <select
+                                required
+                                className={SELECT}
+                                value={customerId}
+                                onChange={(e) => {
+                                    const c = realCustomers.find((rc) => String(rc.id) === e.target.value);
+                                    setCustomerId(e.target.value);
+                                    setCustomer(c?.name ?? c?.display_name ?? "");
+                                    setPlaceOfSupply(c?.place_of_supply ?? "");
+                                }}
+                            >
+                                <option value="">Select a customer</option>
+                                {realCustomers.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name || c.display_name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div>
                             <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Subject</label>
                             <input required placeholder="e.g. Annual SaaS Subscription" className={FIELD} value={subject} onChange={(e) => setSubject(e.target.value)} />
+                        </div>
+                    </div>
+
+                    {/* Reference + Salesperson */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Reference Number</label>
+                            <input placeholder="e.g. PO-12345" className={FIELD} value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Salesperson</label>
+                            <input placeholder="e.g. Aarav Shah" className={FIELD} value={salesperson} onChange={(e) => setSalesperson(e.target.value)} />
+                        </div>
+                    </div>
+
+                    {/* Billing + Shipping Address */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Billing Address</label>
+                            <textarea rows={2} placeholder="Street, City, State, PIN" className={cn(FIELD, "resize-none")} value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
+                                Shipping Address <span className="normal-case font-normal text-zinc-400">(optional, defaults to billing)</span>
+                            </label>
+                            <textarea rows={2} placeholder="Street, City, State, PIN" className={cn(FIELD, "resize-none")} value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} />
+                        </div>
+                    </div>
+
+                    {/* Place of Supply + Currency */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Place of Supply</label>
+                            <input placeholder="e.g. 27-Maharashtra" className={FIELD} value={placeOfSupply} onChange={(e) => setPlaceOfSupply(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Currency</label>
+                            <select className={SELECT} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                                <option value="INR">INR — Indian Rupee</option>
+                                <option value="USD">USD — US Dollar</option>
+                                <option value="EUR">EUR — Euro</option>
+                                <option value="GBP">GBP — British Pound</option>
+                            </select>
                         </div>
                     </div>
 
@@ -358,20 +601,26 @@ function CreateQuoteModal({ onClose, onAdd }: {
                         <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-2">Line Items</label>
                         <div className="border border-zinc-200 rounded-lg overflow-hidden">
                             {/* Line item header */}
-                            <div className="grid grid-cols-[1fr_64px_100px_72px_80px_32px] gap-2 px-3 py-2 bg-zinc-50 border-b border-zinc-200">
-                                {["Description", "Qty", "Unit Price", "Tax %", "Amount", ""].map((h, i) => (
+                            <div className="grid grid-cols-[1fr_90px_56px_90px_64px_64px_90px_32px] gap-2 px-3 py-2 bg-zinc-50 border-b border-zinc-200">
+                                {["Description", "HSN/SAC", "Qty", "Unit Price", "Disc %", "Tax %", "Amount", ""].map((h, i) => (
                                     <span key={i} className="text-[11px] font-medium text-zinc-400 uppercase tracking-wide">{h}</span>
                                 ))}
                             </div>
 
                             {/* Line item rows */}
                             {lineItems.map((item) => (
-                                <div key={item.id} className="grid grid-cols-[1fr_64px_100px_72px_80px_32px] gap-2 px-3 py-2 border-b border-zinc-100 last:border-0 items-center">
+                                <div key={item.id} className="grid grid-cols-[1fr_90px_56px_90px_64px_64px_90px_32px] gap-2 px-3 py-2 border-b border-zinc-100 last:border-0 items-center">
                                     <input
                                         placeholder="Item description"
                                         className="text-[13px] text-zinc-800 bg-transparent focus:outline-none placeholder:text-zinc-300"
                                         value={item.description}
                                         onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                                    />
+                                    <input
+                                        placeholder="HSN/SAC"
+                                        className="text-[13px] text-zinc-800 bg-transparent focus:outline-none w-full placeholder:text-zinc-300"
+                                        value={item.hsnSac}
+                                        onChange={(e) => updateItem(item.id, "hsnSac", e.target.value)}
                                     />
                                     <input
                                         type="number" min={1}
@@ -388,11 +637,17 @@ function CreateQuoteModal({ onClose, onAdd }: {
                                     <input
                                         type="number" min={0} max={100}
                                         className="text-[13px] text-zinc-800 bg-transparent focus:outline-none text-center w-full"
+                                        value={item.discountPct}
+                                        onChange={(e) => updateItem(item.id, "discountPct", parseFloat(e.target.value) || 0)}
+                                    />
+                                    <input
+                                        type="number" min={0} max={100}
+                                        className="text-[13px] text-zinc-800 bg-transparent focus:outline-none text-center w-full"
                                         value={item.taxPct}
                                         onChange={(e) => updateItem(item.id, "taxPct", parseFloat(e.target.value) || 0)}
                                     />
                                     <span className="text-[12px] font-mono text-zinc-600 tabular-nums">
-                                        {fmt(item.qty * item.unitPrice * (1 + item.taxPct / 100))}
+                                        {fmt(calcLineAmount(item))}
                                     </span>
                                     <button
                                         type="button"
@@ -434,6 +689,26 @@ function CreateQuoteModal({ onClose, onAdd }: {
                                     onChange={(e) => setDiscountPct(e.target.value)}
                                 />
                             </div>
+
+                            <div className="flex items-center justify-between text-[13px] text-zinc-500">
+                                <span>Shipping Charges</span>
+                                <input
+                                    type="number" min={0} step="0.01"
+                                    className="w-20 text-right text-[13px] border border-zinc-200 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20"
+                                    value={shippingCharges}
+                                    onChange={(e) => setShippingCharges(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between text-[13px] text-zinc-500">
+                                <span>Round Off</span>
+                                <input
+                                    type="number" step="0.01"
+                                    className="w-20 text-right text-[13px] border border-zinc-200 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-[#5B5FEF]/20"
+                                    value={roundOff}
+                                    onChange={(e) => setRoundOff(e.target.value)}
+                                />
+                            </div>
+
                             <div className="flex justify-between text-[14px] font-semibold text-zinc-900 border-t border-zinc-200 pt-2 mt-1">
                                 <span>Total</span>
                                 <span className="font-mono tabular-nums">{fmt(total)}</span>
@@ -457,13 +732,46 @@ function CreateQuoteModal({ onClose, onAdd }: {
                         </div>
                     </div>
 
+
+                    {/* Attachments */}
+                    <div>
+                        <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-2">
+                            Attachments <span className="normal-case font-normal text-zinc-400">(optional)</span>
+                        </label>
+                        <div className="border-2 border-dashed border-zinc-200 rounded-lg p-4 text-center hover:bg-zinc-50 transition-colors cursor-pointer relative">
+                            <input
+                                type="file"
+                                multiple
+                                onChange={handleFileChange}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <p className="text-[12px] text-zinc-500">Click to upload or drag and drop</p>
+                        </div>
+                        {attachments.length > 0 && (
+                            <div className="mt-2 space-y-1.5">
+                                {attachments.map((file, i) => (
+                                    <div key={i} className="flex items-center justify-between bg-zinc-50 px-3 py-1.5 rounded-lg border border-zinc-200">
+                                        <span className="text-[12px] text-zinc-700 truncate">{file.name}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveFile(i)}
+                                            className="text-zinc-400 hover:text-red-500 transition-colors"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Actions */}
                     <div className="pt-2 flex items-center gap-2.5">
                         <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 text-[13px] font-medium text-zinc-700 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors">
                             Cancel
                         </button>
-                        <button type="submit" className="flex-1 px-4 py-2.5 text-[13px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors shadow-sm">
-                            Save as Draft
+                        <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 text-[13px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-60 rounded-lg transition-colors shadow-sm">
+                            {submitting ? "Saving…" : "Save as Draft"}
                         </button>
                     </div>
                 </form>
@@ -476,11 +784,61 @@ function CreateQuoteModal({ onClose, onAdd }: {
 // Page
 // ---------------------------------------------------------------------------
 export default function Quotes() {
-    const [quotes, setQuotes] = useState<Quote[]>(initialQuotes);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("All");
     const [dateRange, setDateRange] = useState("This Month");
     const [showModal, setShowModal] = useState(false);
+
+    const fetchQuotes = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch("http://localhost:8888/api/quotes", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (data.success) {
+                const mapped: Quote[] = data.quotes.map((q: any) => ({
+                    id: String(q.id),
+                    quoteNo: q.quote_number,
+                    customerId: String(q.client_id),
+                    customer: q.customer_name || q.client_name || "",
+                    billingAddress: q.billing_address || "",
+                    shippingAddress: q.shipping_address || "",
+                    placeOfSupply: q.place_of_supply || "",
+                    subject: q.subject || "",
+                    referenceNumber: q.reference_number || undefined,
+                    salesperson: undefined,
+                    quoteDate: q.quote_date,
+                    quoteDateLabel: new Date(q.quote_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
+                    expiryDate: q.expiry_date,
+                    expiryDateLabel: q.expiry_date ? new Date(q.expiry_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "",
+                    currency: q.currency || "INR",
+                    lineItems: [],
+                    discountPct: 0,
+                    shippingCharges: parseFloat(q.shipping_charges || "0"),
+                    roundOff: parseFloat(q.round_off || "0"),
+                    notes: q.customer_notes || undefined,
+                    terms: q.terms_conditions || undefined,
+                    status: q.status,
+                    convertedToInvoiceId: q.converted_to_invoice_id ? String(q.converted_to_invoice_id) : undefined,
+                    amount: parseFloat(q.amount || "0"),
+                    attachments: undefined,
+                }));
+                setQuotes(mapped);
+            }
+        } catch (error) {
+            console.error("Failed to fetch quotes:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchQuotes();
+    }, []);
 
     const filtered = useMemo(() => {
         const q = searchQuery.toLowerCase();
@@ -506,10 +864,10 @@ export default function Quotes() {
     const acceptanceRate = totalSent > 0 ? Math.round((totalAccepted / totalSent) * 100) : 0;
 
     const totalOpenValue = openQuotes.reduce(
-        (s, q) => s + calcTotal(q.lineItems, q.discountPct), 0,
+        (s, q) => s + calcTotal(q.lineItems, q.discountPct, q.shippingCharges, q.roundOff, q.amount), 0,
     );
     const acceptedValue = acceptedThisMonth.reduce(
-        (s, q) => s + calcTotal(q.lineItems, q.discountPct), 0,
+        (s, q) => s + calcTotal(q.lineItems, q.discountPct, q.shippingCharges, q.roundOff, q.amount), 0,
     );
 
     const updateStatus = (id: string, status: QuoteStatus) => {
@@ -517,9 +875,10 @@ export default function Quotes() {
     };
 
     const handleAdd = (quote: Quote) => {
-        setQuotes([quote, ...quotes]);
         setShowModal(false);
+        fetchQuotes();
     };
+
 
     return (
         <div className="bg-[#FAFAFA] min-h-screen font-sans antialiased">
@@ -654,7 +1013,7 @@ export default function Quotes() {
                         <tbody className="divide-y divide-zinc-100">
                             {filtered.map((quote) => {
                                 const expiry = getExpirySeverity(quote);
-                                const total = calcTotal(quote.lineItems, quote.discountPct);
+                                const total = calcTotal(quote.lineItems, quote.discountPct, quote.shippingCharges, quote.roundOff, quote.amount);
                                 return (
                                     <tr
                                         key={quote.id}
@@ -785,7 +1144,7 @@ export default function Quotes() {
                             </span>
                             <span className="text-[13px] font-semibold text-zinc-900 tabular-nums font-mono">
                                 Total value:{" "}
-                                {fmt(Math.round(filtered.reduce((s, q) => s + calcTotal(q.lineItems, q.discountPct), 0)))}
+                                {fmt(Math.round(filtered.reduce((s, q) => s + calcTotal(q.lineItems, q.discountPct, q.shippingCharges, q.roundOff, q.amount), 0)))}
                             </span>
                         </div>
                     )}

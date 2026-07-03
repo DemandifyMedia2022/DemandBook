@@ -84,6 +84,7 @@ app.get('/api/me', authMiddleware, (req: AuthRequest, res: Response) => {
 
 // Domain-driven routes
 app.use('/api/client', clientRoutes);
+app.use('/api/clients', clientRoutes); // Support plural
 app.use('/api/invoice', invoiceRoutes);
 app.use('/api/invoices', invoiceRoutes); // Support plural
 app.use('/api/bill', billRoutes);

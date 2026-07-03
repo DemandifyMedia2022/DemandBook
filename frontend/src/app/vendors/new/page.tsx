@@ -101,7 +101,7 @@ export default function NewVendor() {
 
   const handleFetchGSTIN = async () => {
     if (!gstin) return alert("Please enter GSTIN first");
-    
+
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     if (!gstRegex.test(gstin)) {
       alert("Invalid GSTIN format. Please check the entered GSTIN.");
@@ -131,7 +131,7 @@ export default function NewVendor() {
         setVendorLanguage(d.vendor_language || "English");
         setCurrency(d.currency || "INR");
         setPaymentTerms(d.payment_terms || "Net 30");
-        
+
         if (d.address && d.address.billing) {
           const b = d.address.billing;
           setBillingAttention(b.attention || "");
@@ -347,26 +347,26 @@ export default function NewVendor() {
           <div className="flex flex-wrap items-end gap-4 max-w-3xl">
             <div className="flex-1 min-w-[200px]">
               <FormField label="GSTIN">
-                <input 
-                  className={inputCls} 
-                  placeholder="e.g. 27ABCDE1234F1Z5" 
-                  value={gstin} 
-                  onChange={(e) => setGstin(e.target.value.toUpperCase())} 
+                <input
+                  className={inputCls}
+                  placeholder="e.g. 27ABCDE1234F1Z5"
+                  value={gstin}
+                  onChange={(e) => setGstin(e.target.value.toUpperCase())}
                   maxLength={15}
                 />
               </FormField>
             </div>
-            <button 
-              type="button" 
-              onClick={handleFetchGSTIN} 
+            <button
+              type="button"
+              onClick={handleFetchGSTIN}
               disabled={!gstin}
               className="px-4 py-2 bg-card-container border border-border rounded-lg text-sm font-semibold hover:bg-card-container-high transition-colors disabled:opacity-50 whitespace-nowrap"
             >
               Prefill details from the GST portal
             </button>
-            <a 
-              href="https://services.gst.gov.in/services/searchtp" 
-              target="_blank" 
+            <a
+              href="https://services.gst.gov.in/services/searchtp"
+              target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 bg-card-container border border-border rounded-lg text-sm font-semibold hover:bg-card-container-high transition-colors flex items-center gap-2 whitespace-nowrap"
             >
@@ -605,10 +605,10 @@ export default function NewVendor() {
                 <h4 className="font-bold text-sm">Custom Fields</h4>
                 {Object.keys(customFields).map((field) => (
                   <FormField key={field} label={field}>
-                    <input 
-                      className={inputCls} 
-                      value={customFields[field]} 
-                      onChange={(e) => setCustomFields({ ...customFields, [field]: e.target.value })} 
+                    <input
+                      className={inputCls}
+                      value={customFields[field]}
+                      onChange={(e) => setCustomFields({ ...customFields, [field]: e.target.value })}
                     />
                   </FormField>
                 ))}
@@ -653,15 +653,15 @@ export default function NewVendor() {
               <FormField label="PAN">
                 <input className={inputCls} value={pan} onChange={(e) => setPan(e.target.value)} placeholder="ABCDE1234F" />
               </FormField>
-              
+
               <div className="pt-2 border-t border-border">
                 <p className="font-semibold text-sm mb-1">MSME Registered?</p>
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
-                  <input 
-                    type="checkbox" 
-                    checked={msmeRegistered} 
-                    onChange={(e) => setMsmeRegistered(e.target.checked)} 
-                    className="rounded border-border text-primary focus:ring-primary w-4 h-4" 
+                  <input
+                    type="checkbox"
+                    checked={msmeRegistered}
+                    onChange={(e) => setMsmeRegistered(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-primary w-4 h-4"
                   />
                   <span>This vendor is MSME registered</span>
                 </label>
@@ -679,7 +679,7 @@ export default function NewVendor() {
                   <option value="GBP">GBP - British Pound</option>
                 </select>
               </FormField>
-              
+
               <div className="flex items-center gap-4">
                 <FormField label="Opening Balance">
                   <input type="number" step="0.01" className={inputCls} value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} placeholder="0.00" />

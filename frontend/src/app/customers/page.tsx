@@ -1,4 +1,4 @@
-// "use client";
+// "use clients";
 
 // import { useState } from "react";
 // import { useRouter } from "next/navigation";
@@ -149,10 +149,9 @@
 // }
 
 
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -161,84 +160,37 @@ import {
   Plus,
   Mail,
   Phone,
-  ArrowUpRight,
-  ArrowDownRight,
   MoreHorizontal,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — matches the `clients` table shape returned by your API
 // ---------------------------------------------------------------------------
-interface Customer {
-  id: string;
+interface Client {
+  id: number;
+  custom_id: string;
   name: string;
+  display_name: string | null;
+  company_name: string | null;
   email: string;
   phone: string;
+  work_phone: string | null;
+  mobile_phone: string | null;
+  type: "customer" | "vendor";
   status: "Active" | "Inactive";
   balance: number;
-  trend: number[];
+  gstin: string | null;
+  customer_type: "Business" | "Individual" | null;
+  currency: string;
 }
 
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-const initialCustomers: Customer[] = [
-  {
-    id: "CUST-4092",
-    name: "Acme Solutions",
-    email: "john.doe@acme.com",
-    phone: "+91 98765 43210",
-    status: "Active",
-    balance: 12450.0,
-    trend: [8000, 9000, 9500, 10200, 11000, 11800, 12100, 12450],
-  },
-  {
-    id: "CUST-3912",
-    name: "Blue Tier Tech",
-    email: "sarah@bluetier.io",
-    phone: "+91 91234 56789",
-    status: "Active",
-    balance: 4200.5,
-    trend: [3000, 3200, 3400, 3600, 3800, 4000, 4100, 4200],
-  },
-  {
-    id: "CUST-2844",
-    name: "Cloud Harbor",
-    email: "billing@charbor.com",
-    phone: "+91 80001 11222",
-    status: "Inactive",
-    balance: 0.0,
-    trend: [500, 400, 300, 200, 100, 50, 25, 0],
-  },
-  {
-    id: "CUST-5512",
-    name: "Digital Wave Inc",
-    email: "mark@digitalwave.io",
-    phone: "+91 77777 12345",
-    status: "Active",
-    balance: 1120.0,
-    trend: [800, 850, 900, 950, 1000, 1050, 1080, 1120],
-  },
-  {
-    id: "CUST-8210",
-    name: "Eco Stream Logistics",
-    email: "admin@ecostream.log",
-    phone: "+91 88884 56789",
-    status: "Active",
-    balance: 52000.0,
-    trend: [40000, 42000, 44000, 46000, 48000, 50000, 51000, 52000],
-  },
-  {
-    id: "CUST-6390",
-    name: "FlexTech Systems",
-    email: "info@flextech.in",
-    phone: "+91 99990 11100",
-    status: "Active",
-    balance: 7800.0,
-    trend: [5000, 5500, 6000, 6300, 6600, 7000, 7400, 7800],
-  },
-];
+interface SummaryData {
+  totalCount: number;
+  activeCount: number;
+  totalReceivables: number;
+}
 
 const statusColors = {
   Active: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
@@ -246,65 +198,119 @@ const statusColors = {
 };
 
 // ---------------------------------------------------------------------------
+// API helpers — adjust the base path if your app doesn't proxy through /api
+// ---------------------------------------------------------------------------
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
+
+function getAuthHeaders() {
+  const token = localStorage.getItem("token");
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function fetchClients(params: { status?: string; q?: string }) {
+  const search = new URLSearchParams({ type: "customer" });
+  if (params.status) search.set("status", params.status);
+  if (params.q) search.set("q", params.q);
+
+  const res = await fetch(`${API_BASE}/clients/list?${search.toString()}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to load customers.");
+  const data = await res.json();
+  return data.clients as Client[];
+}
+
+async function fetchSummary() {
+  const res = await fetch(`${API_BASE}/clients/summary`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to load summary.");
+  const data = await res.json();
+  return data as SummaryData;
+}
+
+async function deactivateClient(id: number) {
+  const res = await fetch(`${API_BASE}/clients/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to deactivate customer.");
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Components
 // ---------------------------------------------------------------------------
-function TrendBadge({ data }: { data: number[] }) {
-  const start = data[0];
-  const end = data[data.length - 1];
-  const percentChange = ((end - start) / start) * 100;
-  const isPositive = percentChange >= 0;
-
+function StatCard({ label, value, loading }: { label: string; value: string; loading?: boolean }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-0.5 text-[12px] font-medium px-1.5 py-0.5 rounded-full",
-        isPositive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
-      )}
-    >
-      {isPositive ? (
-        <ArrowUpRight className="w-3 h-3" />
+    <div className="bg-white border border-zinc-200/80 rounded-xl p-5 flex flex-col gap-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all duration-200">
+      <span className="text-[13px] font-medium text-zinc-500">{label}</span>
+      {loading ? (
+        <div className="h-[26px] w-20 bg-zinc-100 rounded animate-pulse" />
       ) : (
-        <ArrowDownRight className="w-3 h-3" />
+        <span className="text-[26px] font-semibold text-zinc-900 tabular-nums tracking-tight">
+          {value}
+        </span>
       )}
-      {Math.abs(percentChange).toFixed(1)}%
-    </span>
+    </div>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  delta,
+function ActionsMenu({
+  client,
+  onEdit,
+  onDeactivate,
 }: {
-  label: string;
-  value: string;
-  delta?: number;
+  client: Client;
+  onEdit: () => void;
+  onDeactivate: () => void;
 }) {
-  const positive = delta !== undefined && delta >= 0;
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="bg-white border border-zinc-200/80 rounded-xl p-5 flex flex-col gap-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all duration-200">
-      <div className="flex items-center justify-between">
-        <span className="text-[13px] font-medium text-zinc-500">{label}</span>
-        {delta !== undefined && (
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 text-[12px] font-medium px-1.5 py-0.5 rounded-full",
-              positive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+    <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-zinc-200 rounded-lg shadow-lg z-20 py-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+                onEdit();
+              }}
+              className="w-full text-left px-3 py-2 text-[13px] text-zinc-700 hover:bg-zinc-50"
+            >
+              Edit
+            </button>
+            {client.status === "Active" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  onDeactivate();
+                }}
+                className="w-full text-left px-3 py-2 text-[13px] text-red-600 hover:bg-red-50"
+              >
+                Deactivate
+              </button>
             )}
-          >
-            {positive ? (
-              <ArrowUpRight className="w-3 h-3" />
-            ) : (
-              <ArrowDownRight className="w-3 h-3" />
-            )}
-            {Math.abs(delta)}%
-          </span>
-        )}
-      </div>
-      <span className="text-[26px] font-semibold text-zinc-900 tabular-nums tracking-tight">
-        {value}
-      </span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -314,23 +320,49 @@ function StatCard({
 // ---------------------------------------------------------------------------
 export default function Customers() {
   const router = useRouter();
-  const [customers] = useState<Customer[]>(initialCustomers);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = customers.filter((c) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      c.name.toLowerCase().includes(q) ||
-      c.id.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q);
-    const matchesStatus =
-      selectedStatus === "All" || c.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const loadClients = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [clientsData, summary] = await Promise.all([
+        fetchClients({
+          status: selectedStatus !== "All" ? selectedStatus : undefined,
+          q: searchQuery || undefined,
+        }),
+        fetchSummary(),
+      ]);
+      setClients(clientsData);
+      setSummaryData(summary);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedStatus, searchQuery]);
 
-  const activeCount = customers.filter((c) => c.status === "Active").length;
-  const totalBalance = customers.reduce((sum, c) => sum + c.balance, 0);
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      loadClients();
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [loadClients]);
+
+  const handleDeactivate = async (client: Client) => {
+    if (!confirm(`Deactivate ${client.display_name || client.name}?`)) return;
+    try {
+      await deactivateClient(client.id);
+      loadClients();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen font-sans antialiased">
@@ -359,35 +391,35 @@ export default function Customers() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             label="Total Customers"
-            value={String(customers.length)}
-            delta={12.4}
+            value={String(summaryData?.totalCount ?? 0)}
+            loading={!summaryData}
           />
           <StatCard
             label="Active"
-            value={String(activeCount)}
-            delta={5.2}
+            value={String(summaryData?.activeCount ?? 0)}
+            loading={!summaryData}
           />
           <StatCard
             label="Total Outstanding"
-            value={`₹${totalBalance.toLocaleString("en-IN", { minimumFractionDigits: 0 })}`}
-            delta={8.1}
+            value={`₹${(summaryData?.totalReceivables ?? 0).toLocaleString("en-IN", {
+              minimumFractionDigits: 0,
+            })}`}
+            loading={!summaryData}
           />
         </div>
 
         {/* Table section */}
         <div className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-          {/* Header */}
           <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-[14px] font-semibold text-zinc-900">
                 Customer Directory
               </h2>
               <p className="text-[12px] text-zinc-500">
-                {filtered.length} customer{filtered.length !== 1 ? "s" : ""}
+                {loading ? "Loading…" : `${clients.length} customer${clients.length !== 1 ? "s" : ""}`}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Search */}
               <div className="relative w-56">
                 <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -399,7 +431,6 @@ export default function Customers() {
                 />
               </div>
 
-              {/* Status filter */}
               <div className="relative">
                 <select
                   value={selectedStatus}
@@ -415,116 +446,120 @@ export default function Customers() {
             </div>
           </div>
 
-          {/* Table */}
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-zinc-100">
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
-                  Customer
-                </th>
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
-                  Status
-                </th>
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
-                  Contact
-                </th>
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
-                  Outstanding
-                </th>
-                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
-                  Trend
-                </th>
-                <th className="px-6 py-2.5 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-wide">
-                  Actions
-                </th>
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Customer</th>
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Status</th>
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Contact</th>
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">GSTIN</th>
+                <th className="px-6 py-2.5 text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Outstanding</th>
+                <th className="px-6 py-2.5 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {filtered.map((customer) => (
-                <tr
-                  key={customer.id}
-                  className="hover:bg-zinc-50/70 transition-colors cursor-pointer"
-                >
-                  {/* Name */}
-                  <td className="px-6 py-3">
-                    <div>
-                      <p className="text-[13px] font-medium text-zinc-900">
-                        {customer.name}
-                      </p>
-                      <p className="text-[12px] text-zinc-500">{customer.id}</p>
-                    </div>
+              {loading && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <Loader2 className="w-5 h-5 text-zinc-300 animate-spin mx-auto" />
                   </td>
+                </tr>
+              )}
 
-                  {/* Status */}
-                  <td className="px-6 py-3">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-[12px] font-medium px-2 py-1 rounded-full",
-                        statusColors[customer.status].bg,
-                        statusColors[customer.status].text
-                      )}
+              {!loading && error && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <p className="text-[13px] text-red-600">{error}</p>
+                    <button
+                      onClick={loadClients}
+                      className="mt-2 text-[12px] text-[#5B5FEF] hover:underline"
                     >
-                      <span
-                        className={cn(
-                          "w-1.5 h-1.5 rounded-full",
-                          statusColors[customer.status].dot
-                        )}
-                      />
-                      {customer.status}
-                    </span>
-                  </td>
-
-                  {/* Contact */}
-                  <td className="px-6 py-3">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-zinc-400" />
-                        <a
-                          href={`mailto:${customer.email}`}
-                          className="text-[12px] text-[#5B5FEF] hover:underline"
-                        >
-                          {customer.email}
-                        </a>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-zinc-400" />
-                        <a
-                          href={`tel:${customer.phone}`}
-                          className="text-[12px] text-zinc-600 hover:text-zinc-900"
-                        >
-                          {customer.phone}
-                        </a>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Balance */}
-                  <td className="px-6 py-3 font-mono text-[13px] font-medium text-zinc-900 tabular-nums">
-                    ₹{customer.balance.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-
-                  {/* Trend */}
-                  <td className="px-6 py-3">
-                    <TrendBadge data={customer.trend} />
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-3 text-right">
-                    <button className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors">
-                      <MoreHorizontal className="w-4 h-4" />
+                      Try again
                     </button>
                   </td>
                 </tr>
-              ))}
+              )}
 
-              {filtered.length === 0 && (
+              {!loading &&
+                !error &&
+                clients.map((client) => (
+                  <tr
+                    key={client.id}
+                    onClick={() => router.push(`/customers/${client.id}`)}
+                    className="hover:bg-zinc-50/70 transition-colors cursor-pointer"
+                  >
+                    <td className="px-6 py-3">
+                      <div>
+                        <p className="text-[13px] font-medium text-zinc-900">
+                          {client.display_name || client.company_name || client.name}
+                        </p>
+                        <p className="text-[12px] text-zinc-500">{client.custom_id}</p>
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-3">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 text-[12px] font-medium px-2 py-1 rounded-full",
+                          statusColors[client.status].bg,
+                          statusColors[client.status].text
+                        )}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", statusColors[client.status].dot)} />
+                        {client.status}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-3">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5 text-zinc-400" />
+                          <a
+                            href={`mailto:${client.email}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[12px] text-[#5B5FEF] hover:underline"
+                          >
+                            {client.email}
+                          </a>
+                        </div>
+                        {(client.work_phone || client.mobile_phone || client.phone) && (
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-zinc-400" />
+                            <a
+                              href={`tel:${client.mobile_phone || client.work_phone || client.phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[12px] text-zinc-600 hover:text-zinc-900"
+                            >
+                              {client.mobile_phone || client.work_phone || client.phone}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-3 text-[12px] text-zinc-600 font-mono">
+                      {client.gstin || "—"}
+                    </td>
+
+                    <td className="px-6 py-3 font-mono text-[13px] font-medium text-zinc-900 tabular-nums">
+                      {client.currency === "INR" ? "₹" : client.currency + " "}
+                      {(client.balance ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </td>
+
+                    <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <ActionsMenu
+                        client={client}
+                        onEdit={() => router.push(`/customers/${client.id}/edit`)}
+                        onDeactivate={() => handleDeactivate(client)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+
+              {!loading && !error && clients.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
-                    <p className="text-[13px] text-zinc-400">
-                      No customers match your filters.
-                    </p>
+                    <p className="text-[13px] text-zinc-400">No customers match your filters.</p>
                   </td>
                 </tr>
               )}
