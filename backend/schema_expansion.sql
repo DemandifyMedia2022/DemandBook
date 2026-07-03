@@ -300,6 +300,10 @@ CREATE TABLE IF NOT EXISTS manual_journals (
     reference VARCHAR(100),
     notes TEXT,
     status VARCHAR(50) DEFAULT 'Draft' CHECK (status IN ('Draft', 'Posted')),
+    reverse_date DATE,
+    publish_reverse BOOLEAN DEFAULT FALSE,
+    reporting_method VARCHAR(50) DEFAULT 'Accrual and Cash' CHECK (reporting_method IN ('Accrual and Cash', 'Accrual Only', 'Cash Only')),
+    currency VARCHAR(10) DEFAULT 'INR',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -311,6 +315,15 @@ CREATE TABLE IF NOT EXISTS journal_entries (
     debit NUMERIC(15, 2) DEFAULT 0.00,
     credit NUMERIC(15, 2) DEFAULT 0.00,
     description TEXT,
+    contact_id INT REFERENCES clients(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS manual_journal_attachments (
+    id SERIAL PRIMARY KEY,
+    journal_id INT NOT NULL REFERENCES manual_journals(id) ON DELETE CASCADE,
+    file_name VARCHAR(255) NOT NULL,
+    file_data TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

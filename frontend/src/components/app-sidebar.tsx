@@ -138,6 +138,8 @@ const navItems: NavItem[] = [
   }
 ];
 
+import Logo from "@/components/logo"
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
 
@@ -148,7 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/" />}>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Sparkles className="size-4" />
+                <Logo className="size-5" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-semibold text-sm">DemandBooks</span>

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader, SectionCard, StatusBadge, Modal, FormField, inputCls, selectCls } from "@/components/ui/page-shell";
+import { cn } from "@/lib/utils";
+import Logo from "@/components/logo";
 
 export default function InvoiceDetailPage({ params }: { params: { id: string } }) {
     const router = useRouter();
@@ -10,6 +12,12 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
     const [loading, setLoading] = useState(true);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     
+    // Layout branding states from localStorage settings
+    const [logo, setLogo] = useState<string | null>(null);
+    const [logoAlignment, setLogoAlignment] = useState<"left" | "center" | "right">("left");
+    const [primaryColor, setPrimaryColor] = useState("#2563eb");
+    const [showShippingAddress, setShowShippingAddress] = useState(true);
+
     // Payment form
     const [paymentAmount, setPaymentAmount] = useState("");
     const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
@@ -40,6 +48,19 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
 
     useEffect(() => {
         fetchInvoice();
+        
+        // Load custom branding settings
+        if (typeof window !== "undefined") {
+            const savedLogo = localStorage.getItem("inv_logo");
+            const savedAlign = localStorage.getItem("inv_align") as any;
+            const savedPrimary = localStorage.getItem("inv_primary");
+            const savedShowShip = localStorage.getItem("inv_show_ship");
+
+            if (savedLogo) setLogo(savedLogo);
+            if (savedAlign) setLogoAlignment(savedAlign);
+            if (savedPrimary) setPrimaryColor(savedPrimary);
+            if (savedShowShip) setShowShippingAddress(savedShowShip === "true");
+        }
     }, [params.id]);
 
     const handleRecordPayment = async (e: React.FormEvent) => {
@@ -133,26 +154,57 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-card border border-border rounded-xl shadow-sm p-10 print:shadow-none print:border-none">
                         {/* Header */}
-                        <div className="flex justify-between items-start mb-10">
+                        <div
+                            className={cn(
+                                "flex flex-col gap-4 mb-10 pb-6 border-b border-zinc-100",
+                                logoAlignment === "left" && "sm:flex-row justify-between items-start",
+                                logoAlignment === "right" && "sm:flex-row-reverse justify-between items-start",
+                                logoAlignment === "center" && "items-center text-center"
+                            )}
+                        >
+                            {/* Logo wrapper */}
                             <div>
-                                <h1 className="text-3xl font-extrabold text-foreground tracking-tight">INVOICE</h1>
-                                <p className="text-sm font-bold text-muted-foreground mt-1">{invoice.number}</p>
-                                <div className="mt-2"><StatusBadge status={invoice.status} /></div>
+                                {logo ? (
+                                    <img src={logo} alt="Company Logo" className="max-h-16 max-w-[200px] object-contain" />
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-white shadow-sm">
+                                            <Logo className="w-5.5 h-5.5" />
+                                        </div>
+                                        <span className="font-bold text-sm text-foreground">DemandBooks</span>
+                                    </div>
+                                )}
+                                <p className="text-[10px] text-muted-foreground mt-1">Vikarah Tech Private Limited • Pune, Maharashtra</p>
                             </div>
-                            <div className="text-right">
-                                <h3 className="font-bold text-foreground text-lg">DemandBooks SaaS</h3>
-                                <p className="text-sm text-muted-foreground mt-1">123 Business Avenue<br/>Tech Park, TP 400101<br/>contact@demandbooks.io</p>
+
+                            {/* Title & Number */}
+                            <div className={cn("space-y-1.5", logoAlignment === "right" ? "sm:text-left" : "sm:text-right")}>
+                                <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: primaryColor }}>INVOICE</h1>
+                                <p className="text-sm font-bold text-muted-foreground">{invoice.number}</p>
+                                <div className={cn("mt-1.5 flex", logoAlignment === "center" ? "justify-center" : logoAlignment === "right" ? "justify-start" : "justify-end")}>
+                                    <StatusBadge status={invoice.status} />
+                                </div>
                             </div>
                         </div>
 
                         {/* Customer Info */}
-                        <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b border-border">
-                            <div>
-                                <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Bill To</h4>
-                                <p className="font-bold text-foreground text-base">{invoice.customer_name}</p>
-                                <p className="text-sm text-muted-foreground mt-1">{invoice.customer_email}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8 pb-8 border-b border-zinc-100 text-sm">
+                            <div className="space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Bill To</h4>
+                                    <p className="font-bold text-foreground text-base">{invoice.customer_name}</p>
+                                    <p className="text-sm text-muted-foreground mt-1">{invoice.customer_email}</p>
+                                </div>
+                                {showShippingAddress && (
+                                    <div>
+                                        <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Ship To</h4>
+                                        <p className="font-bold text-foreground text-base">{invoice.customer_name}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Acme Logistics Hub • Pune, Maharashtra</p>
+                                    </div>
+                                )}
                             </div>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                            
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-muted-foreground mb-1">Invoice Date:</p>
                                     <p className="font-semibold text-foreground">{new Date(invoice.invoice_date).toLocaleDateString()}</p>
@@ -173,28 +225,30 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                         </div>
 
                         {/* Items Table */}
-                        <table className="w-full text-sm mb-8">
-                            <thead>
-                                <tr className="border-b-2 border-border text-left text-muted-foreground font-semibold">
-                                    <th className="py-2">Description</th>
-                                    <th className="py-2 text-right">Qty</th>
-                                    <th className="py-2 text-right">Rate</th>
-                                    <th className="py-2 text-right">Tax</th>
-                                    <th className="py-2 text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {invoice.items.map((item: any) => (
-                                    <tr key={item.id} className="border-b border-border/50">
-                                        <td className="py-3 font-medium text-foreground">{item.description}</td>
-                                        <td className="py-3 text-right text-muted-foreground">{item.quantity} {item.unit}</td>
-                                        <td className="py-3 text-right text-muted-foreground">{Number(item.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                                        <td className="py-3 text-right text-muted-foreground">{Number(item.tax_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                                        <td className="py-3 text-right font-bold text-foreground">{Number(item.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                        <div className="border border-zinc-200 rounded-lg overflow-hidden shadow-sm mb-8">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-white text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: primaryColor }}>
+                                        <th className="px-4 py-2.5 rounded-l-lg">Description</th>
+                                        <th className="px-4 py-2.5 text-right w-20">Qty</th>
+                                        <th className="px-4 py-2.5 text-right w-24">Rate</th>
+                                        <th className="px-4 py-2.5 text-right w-24">Tax</th>
+                                        <th className="px-4 py-2.5 text-right w-28 rounded-r-lg">Amount</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-100">
+                                    {invoice.items.map((item: any) => (
+                                        <tr key={item.id} className="hover:bg-zinc-50/50">
+                                            <td className="px-4 py-3 font-medium text-foreground">{item.description}</td>
+                                            <td className="px-4 py-3 text-right text-muted-foreground">{item.quantity} {item.unit || "Unit"}</td>
+                                            <td className="px-4 py-3 text-right text-muted-foreground">{Number(item.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                            <td className="px-4 py-3 text-right text-muted-foreground">{Number(item.tax_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                            <td className="px-4 py-3 text-right font-bold text-foreground">{Number(item.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
                         {/* Totals */}
                         <div className="flex justify-end">
@@ -221,15 +275,31 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                                         <span className="font-semibold text-foreground">{Number(invoice.shipping_charges).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-lg font-extrabold py-3 border-t-2 border-border">
+                                <div className="flex justify-between text-lg font-extrabold py-3 border-t-2 border-zinc-200" style={{ borderTopColor: primaryColor }}>
                                     <span className="text-foreground">Total ({invoice.currency})</span>
-                                    <span className="text-primary">{Number(invoice.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                                    <span className="font-mono text-[18px] font-bold text-[#5B5FEF] tabular-nums" style={{ color: primaryColor }}>{Number(invoice.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                 </div>
-                                <div className="flex justify-between text-sm font-bold bg-card-container-low p-2 rounded">
+                                <div className="flex justify-between text-sm font-bold bg-zinc-50 p-2 rounded">
                                     <span className="text-muted-foreground">Balance Due</span>
-                                    <span className="text-destructive">{Number(invoice.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                                    <span className="text-destructive font-mono tabular-nums">{Number(invoice.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Notes & Terms */}
+                        <div className="border-t border-zinc-100 pt-6 mt-8 space-y-4">
+                            {invoice.customer_notes && (
+                                <div>
+                                    <span className="block text-[9.5px] font-bold text-zinc-400 uppercase tracking-wide mb-1">Customer Notes</span>
+                                    <p className="text-xs text-zinc-500 whitespace-pre-line leading-relaxed">{invoice.customer_notes}</p>
+                                </div>
+                            )}
+                            {invoice.terms_conditions && (
+                                <div>
+                                    <span className="block text-[9.5px] font-bold text-zinc-400 uppercase tracking-wide mb-1">Terms &amp; Conditions</span>
+                                    <p className="text-xs text-zinc-500 whitespace-pre-line leading-relaxed">{invoice.terms_conditions}</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

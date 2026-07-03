@@ -1,5 +1,6 @@
 "use client";
 
+import Logo from "@/components/logo";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -192,7 +193,7 @@ export default function ResetPasswordPage() {
           {/* Logo Brand */}
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center text-white shadow-md shadow-zinc-900/10">
-              <Sparkles className="w-4.5 h-4.5" />
+              <Logo className="w-5.5 h-5.5" />
             </div>
             <span className="font-bold text-[17px] text-zinc-900 tracking-tight">DemandBooks</span>
           </div>

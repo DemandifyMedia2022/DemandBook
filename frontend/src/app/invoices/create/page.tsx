@@ -715,7 +715,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -803,6 +803,7 @@ export default function CreateInvoicePage() {
     const [loading, setLoading] = useState(false);
 
     const [invoiceData, setInvoiceData] = useState({
+        number: "",
         customerName: "",
         customerEmail: "",
         invoiceDate: new Date().toISOString().split("T")[0],
@@ -820,6 +821,57 @@ export default function CreateInvoicePage() {
     const [items, setItems] = useState<LineItem[]>([
         { id: Date.now(), description: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, taxAmount: 0, amount: 0 },
     ]);
+
+    // Load defaults from local storage settings on mount
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedPrefix = localStorage.getItem("inv_prefix") || "INV-";
+            const savedNumber = localStorage.getItem("inv_number") || "10001";
+            const savedTerms = localStorage.getItem("inv_terms") || "Net 30";
+            const savedNotes = localStorage.getItem("inv_notes") || "";
+            const savedTermsCond = localStorage.getItem("inv_terms_cond") || "";
+
+            setInvoiceData((prev) => ({
+                ...prev,
+                number: `${savedPrefix}${savedNumber}`,
+                paymentTerms: savedTerms,
+                customerNotes: savedNotes,
+                termsConditions: savedTermsCond,
+            }));
+
+            const savedTax = localStorage.getItem("inv_tax");
+            if (savedTax && items.length > 0) {
+                setItems((prevItems) => {
+                    const first = { ...prevItems[0], taxRate: Number(savedTax) };
+                    const base = first.quantity * first.rate;
+                    const afterDiscount = base - (first.discount || 0);
+                    first.taxAmount = (afterDiscount * first.taxRate) / 100;
+                    first.amount = afterDiscount + first.taxAmount;
+                    return [first, ...prevItems.slice(1)];
+                });
+            }
+        }
+    }, []);
+
+    // Recalculate Due Date when Invoice Date or Payment Terms change
+    useEffect(() => {
+        if (invoiceData.invoiceDate) {
+            const date = new Date(invoiceData.invoiceDate);
+            if (invoiceData.paymentTerms === "Net 15") {
+                date.setDate(date.getDate() + 15);
+            } else if (invoiceData.paymentTerms === "Net 30") {
+                date.setDate(date.getDate() + 30);
+            } else if (invoiceData.paymentTerms === "Net 45") {
+                date.setDate(date.getDate() + 45);
+            } else if (invoiceData.paymentTerms === "Net 60") {
+                date.setDate(date.getDate() + 60);
+            }
+            setInvoiceData((prev) => ({
+                ...prev,
+                dueDate: date.toISOString().split("T")[0],
+            }));
+        }
+    }, [invoiceData.invoiceDate, invoiceData.paymentTerms]);
 
     const handleItemChange = (id: number, field: string, value: number | string) => {
         setItems(items.map((item) => {
@@ -847,6 +899,7 @@ export default function CreateInvoicePage() {
         e.preventDefault();
         setLoading(true);
         const payload = {
+            number: invoiceData.number,
             customerName: invoiceData.customerName,
             customerEmail: invoiceData.customerEmail,
             invoice_date: invoiceData.invoiceDate,
@@ -879,6 +932,16 @@ export default function CreateInvoicePage() {
             });
             const data = await res.json();
             if (data.success) {
+                // Auto-increment invoice next number in settings if it matches current pattern
+                if (typeof window !== "undefined") {
+                    const savedPrefix = localStorage.getItem("inv_prefix") || "INV-";
+                    const savedNumber = localStorage.getItem("inv_number") || "10001";
+                    const currentPattern = `${savedPrefix}${savedNumber}`;
+                    if (invoiceData.number === currentPattern) {
+                        const nextNum = String(parseInt(savedNumber) + 1);
+                        localStorage.setItem("inv_number", nextNum);
+                    }
+                }
                 router.push(`/invoices/${data.invoice.id}`);
             } else {
                 alert("Failed to create invoice: " + data.message);
@@ -966,6 +1029,16 @@ export default function CreateInvoicePage() {
                     {/* Invoice Details */}
                     <SectionCard title="Invoice Details" icon={<Receipt className="w-4 h-4" />}>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                            <div>
+                                <Label required>Invoice Number</Label>
+                                <input
+                                    required
+                                    className={inputCls}
+                                    placeholder="e.g. INV-10001"
+                                    value={invoiceData.number}
+                                    onChange={(e) => setInvoiceData({ ...invoiceData, number: e.target.value })}
+                                />
+                            </div>
                             <div>
                                 <Label required>Invoice Date</Label>
                                 <input

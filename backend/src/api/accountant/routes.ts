@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { 
   listAccounts, createAccount, 
-  listJournals, createJournal, getJournalDetails,
+  listJournals, createJournal, getJournalDetails, deleteJournal,
   listBudgets, createBudget, 
-  listLocks, createLock 
+  listLocks, createLock,
+  listBulkTransactions, executeBulkUpdate
 } from './controller';
 import { authMiddleware } from '../../middlewares/auth';
 
@@ -17,6 +18,10 @@ router.post('/chart-of-accounts', createAccount);
 router.get('/journals', listJournals);
 router.post('/journals', createJournal);
 router.get('/journals/:id', getJournalDetails);
+router.delete('/journals/:id', deleteJournal);
+
+router.get('/bulk-update/transactions', listBulkTransactions);
+router.post('/bulk-update/execute', executeBulkUpdate);
 
 router.get('/budgets', listBudgets);
 router.post('/budgets', createBudget);
